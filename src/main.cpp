@@ -6,10 +6,19 @@
 #include "opengl.hpp"
 #include "math.hpp"
 
+//#define MY_TEST
+
 void init();
 
 int main(int argc, char* argv[])
 {
+#ifdef MY_TEST
+	Math::vec3 v(1, 2, 3);
+	std::cout << v.x() << ' ' << v.y() << ' ' << v.z() << std::endl;
+	auto vv = v.normalized();
+	std::cout << vv.x() << ' ' << vv.y() << ' ' << vv.z() << std::endl;
+	return 0;
+#endif
 	init();
 	Renderer* renderer = new Renderer();
 	try {
@@ -46,11 +55,11 @@ void init()
 	Application::sceneSetting.objectYaw = -90;
 
 	// ¹âÕÕÉèÖÃ
-	Application::sceneSetting.lights[0].direction = toVec3f(glm::normalize(glm::vec3{ -1.0f,  0.0f, 0.0f }));
-	Application::sceneSetting.lights[1].direction = toVec3f(glm::normalize(glm::vec3{ 1.0f,  0.0f, 0.0f }));
-	Application::sceneSetting.lights[2].direction = toVec3f(glm::normalize(glm::vec3{ 0.0f, -1.0f, 0.0f }));
+	Application::sceneSetting.lights[0].direction = Math::vec3(-1.0f, 0.0f, 0.0f);
+	Application::sceneSetting.lights[1].direction = Math::vec3(1.0f, 0.0f, 0.0f);
+	Application::sceneSetting.lights[2].direction = Math::vec3(0.0f, -1.0f, 0.0f);
 
-	Application::sceneSetting.lights[0].radiance = std::vector<float>(3, 1.0f);
-	Application::sceneSetting.lights[1].radiance = std::vector<float>(3, 1.0f);
-	Application::sceneSetting.lights[2].radiance = std::vector<float>(3, 1.0f);
+	Application::sceneSetting.lights[0].radiance = Math::vec3(1.0f);
+	Application::sceneSetting.lights[1].radiance = Math::vec3(1.0f);
+	Application::sceneSetting.lights[2].radiance = Math::vec3(1.0f);
 }

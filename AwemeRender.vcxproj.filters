@@ -19,6 +19,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{7bb3312d-d026-46d7-864d-ec43f9d58618}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{2eb30c7a-7f43-427f-b653-8b1b3aaaf75f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp">
@@ -125,5 +128,40 @@
     <ClInclude Include="lib\Include\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
+    <ClInclude Include="src\light.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data\shaders\cs_equirect2cube.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\cs_irradiance_map.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\cs_lut.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\cs_prefilter.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\pbr_fs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\pbr_vs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\postprocess_fs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\postprocess_vs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\skybox_fs.glsl">
+      <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\skybox_vs.glsl">
+      <Filter>shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -94,7 +94,7 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 {
 	if (action == GLFW_PRESS) {
 
-		SceneSettings::Light* light = nullptr;
+		DirectionalLight* light = nullptr;
 
 		// “˛≤ÿ/œ‘ æ Û±Í
 		if (key == GLFW_KEY_LEFT_ALT) {

@@ -8,10 +8,6 @@
 #include <stdexcept>
 #include <memory>
 
-//#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtx/euler_angles.hpp>
-
 #include <imgui_impl_opengl3.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -224,10 +220,10 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
 	for (int i = 0; i < SceneSettings::NumLights; ++i) {
-		const SceneSettings::Light& light = scene.lights[i];
-		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ toGlmVec3(light.direction), 0.0f });
+		const DirectionalLight& light = scene.lights[i];
+		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4( light.direction.toGlmVec(), 0.0f ));
 		if (light.enabled) {
-			shadingUniforms.lights[i].radiance = glm::vec4{ toGlmVec3(light.radiance), 0.0f };
+			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
 		}
 		else {
 			shadingUniforms.lights[i].radiance = glm::vec4{};
@@ -304,8 +300,8 @@ void Renderer::renderImgui(SceneSettings& scene)
 			lightNum += '0' + char(i + 1);
 			ImGui::Checkbox(lightNum.c_str(), &scene.lights[i].enabled);
 			if (scene.lights[i].enabled) {
-				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.lights[i].radiance.data());
-				ImGui::DragFloat3((lightNum + " Dir").c_str(), scene.lights[i].direction.data(), 0.01f);
+				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.lights[i].radiance.toPtr());
+				ImGui::DragFloat3((lightNum + " Dir").c_str(), scene.lights[i].direction.toPtr(), 0.01f);
 			}
 		}
 		

@@ -184,6 +184,7 @@
     <ClInclude Include="src\application.hpp" />
     <ClInclude Include="src\camera.hpp" />
     <ClInclude Include="src\image.hpp" />
+    <ClInclude Include="src\light.hpp" />
     <ClInclude Include="src\math.hpp" />
     <ClInclude Include="src\mesh.hpp" />
     <ClInclude Include="src\opengl.hpp" />
@@ -191,6 +192,18 @@
     <ClInclude Include="src\scene_setting.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\utils.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="data\shaders\cs_equirect2cube.glsl" />
+    <None Include="data\shaders\cs_irradiance_map.glsl" />
+    <None Include="data\shaders\cs_lut.glsl" />
+    <None Include="data\shaders\cs_prefilter.glsl" />
+    <None Include="data\shaders\pbr_fs.glsl" />
+    <None Include="data\shaders\pbr_vs.glsl" />
+    <None Include="data\shaders\postprocess_fs.glsl" />
+    <None Include="data\shaders\postprocess_vs.glsl" />
+    <None Include="data\shaders\skybox_fs.glsl" />
+    <None Include="data\shaders\skybox_vs.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

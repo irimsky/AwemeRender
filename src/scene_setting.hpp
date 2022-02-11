@@ -1,5 +1,6 @@
 #pragma once
 #include "mesh.hpp"
+#include "light.hpp"
 #include <glm/mat4x4.hpp>
 #include <string>
 
@@ -8,12 +9,12 @@ class SceneSettings
 {
 public:
 	static const int NumLights = 3;
-	struct Light {
+	/*struct dirLight {
 		std::vector<float> radiance;
 		std::vector<float> direction;
 		bool enabled = false;
-	} lights[NumLights];
-
+	} lights[NumLights];*/
+	DirectionalLight lights[NumLights];
 	char* envName;
 	char* preEnv;
 	std::vector<char*> envNames;
