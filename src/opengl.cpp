@@ -29,6 +29,10 @@ struct ShadingUB
 		glm::vec4 direction;
 		glm::vec4 radiance;
 	} lights[SceneSettings::NumLights];
+	struct {
+		glm::vec4 position;
+		glm::vec4 radiance;
+	} ptLights[SceneSettings::NumLights];
 	glm::vec4 eyePosition;
 };
 
@@ -220,13 +224,22 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
 	for (int i = 0; i < SceneSettings::NumLights; ++i) {
-		const DirectionalLight& light = scene.lights[i];
-		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4( light.direction.toGlmVec(), 0.0f ));
+		const DirectionalLight& light = scene.dirLights[i];
+		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ light.direction.toGlmVec(), 0.0f });
 		if (light.enabled) {
 			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
 		}
 		else {
 			shadingUniforms.lights[i].radiance = glm::vec4{};
+		}
+
+		const PointLight& ptLight = scene.ptLights[i];
+		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
+		if (ptLight.enabled) {
+			shadingUniforms.ptLights[i].radiance = glm::vec4(ptLight.radiance.toGlmVec(), 0.0f);
+		}
+		else {
+			shadingUniforms.ptLights[i].radiance = glm::vec4{};
 		}
 	}
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
@@ -298,10 +311,21 @@ void Renderer::renderImgui(SceneSettings& scene)
 		{
 			std::string lightNum = "Light";
 			lightNum += '0' + char(i + 1);
-			ImGui::Checkbox(lightNum.c_str(), &scene.lights[i].enabled);
-			if (scene.lights[i].enabled) {
-				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.lights[i].radiance.toPtr());
-				ImGui::DragFloat3((lightNum + " Dir").c_str(), scene.lights[i].direction.toPtr(), 0.01f);
+			ImGui::Checkbox(lightNum.c_str(), &scene.dirLights[i].enabled);
+			if (scene.dirLights[i].enabled) {
+				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.dirLights[i].radiance.toPtr());
+				ImGui::DragFloat3((lightNum + " Dir").c_str(), scene.dirLights[i].direction.toPtr(), 0.01f);
+			}
+		}
+
+		for (int i = 0; i < scene.NumLights; ++i)
+		{
+			std::string lightNum = "PointLight";
+			lightNum += '0' + char(i + 1);
+			ImGui::Checkbox(lightNum.c_str(), &scene.ptLights[i].enabled);
+			if (scene.ptLights[i].enabled) {
+				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.ptLights[i].radiance.toPtr());
+				ImGui::DragFloat3((lightNum + " Pos").c_str(), scene.ptLights[i].position.toPtr(), 1.0f);
 			}
 		}
 		

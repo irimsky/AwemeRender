@@ -8,8 +8,13 @@ const int NumLights = 3;
 // 非金属的F0近似为0.4
 const vec3 NonMetalF0 = vec3(0.04);
 
-struct AnalyticalLight {
+struct DirectionalLight {
 	vec3 direction;
+	vec3 radiance;
+};
+
+struct PointLight {
+	vec3 position;
 	vec3 radiance;
 };
 
@@ -25,7 +30,8 @@ layout(location=0) out vec4 color;
 
 layout(std140, binding=1) uniform ShadingUniforms
 {
-	AnalyticalLight lights[NumLights];
+	DirectionalLight lights[NumLights];
+	PointLight ptLights[NumLights];
 	vec3 eyePosition;
 };
 
@@ -78,6 +84,14 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float Fwin(float d, float radius) {
+	float ratio = d / radius;
+	float ratio2 = ratio * ratio;
+	float ratio4 = ratio2 * ratio2;
+	float falloff = max(0, 1 - ratio4);
+	return falloff * falloff;
+}
+
 void main()
 {
 	vec3 albedo = texture(albedoTexture, vin.texcoord).rgb;
@@ -101,6 +115,7 @@ void main()
 
 	// 直接光照
 	vec3 directLighting = vec3(0);
+	// 平行光
 	for(int i=0; i<NumLights; ++i)
 	{
 		vec3 L = -lights[i].direction;
@@ -125,6 +140,37 @@ void main()
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
 
 		directLighting += (diffuseBRDF + specularBRDF) * Lradiance * NdotL;
+	}
+
+	// 点光源
+	for(int i=0; i<NumLights; ++i)
+	{
+		vec3 L = ptLights[i].position - vin.position;
+		float dis = length(L);
+		L = normalize(L);
+		// 200距离 1.0	0.022	0.0019
+		float attenuation = 1.0 + 0.022 * dis + 0.0019 * dis * dis;
+		vec3 Lradiance = ptLights[i].radiance;
+		vec3 H = normalize(V + L);
+
+		float NdotL = max(0.0, dot(N, L));
+		float NdotH = max(0.0, dot(N, H));
+		float HdotV = max(0.0, dot(H, V));
+
+		vec3  F = fresnelSchlick(F0, HdotV);
+		float D = NDF_GGX(NdotH, roughness);
+		float G = gaSchlickGGX(NdotL, NdotV, roughness);
+
+		vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
+
+		// 漫反射部分
+		vec3 diffuseBRDF = kd * albedo;
+
+		// 高光部分
+		// 防止除以0
+		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
+
+		directLighting += (diffuseBRDF + specularBRDF) * Lradiance / attenuation * NdotL;
 	}
 
 	// 环境光照

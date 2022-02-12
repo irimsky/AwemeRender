@@ -14,7 +14,9 @@ int main(int argc, char* argv[])
 {
 #ifdef MY_TEST
 	Math::vec3 v(1, 2, 3);
-	std::cout << v.x() << ' ' << v.y() << ' ' << v.z() << std::endl;
+	std::cout << v << std::endl;
+	DirectionalLight dl;
+	std::cout << dl.radiance << std::endl;
 	auto vv = v.normalized();
 	std::cout << vv.x() << ' ' << vv.y() << ' ' << vv.z() << std::endl;
 	return 0;
@@ -55,11 +57,24 @@ void init()
 	Application::sceneSetting.objectYaw = -90;
 
 	// ¹âÕÕÉèÖÃ
-	Application::sceneSetting.lights[0].direction = Math::vec3(-1.0f, 0.0f, 0.0f);
-	Application::sceneSetting.lights[1].direction = Math::vec3(1.0f, 0.0f, 0.0f);
-	Application::sceneSetting.lights[2].direction = Math::vec3(0.0f, -1.0f, 0.0f);
+	Application::sceneSetting.dirLights[0] = DirectionalLight(
+		Math::vec3(1.0f), Math::vec3(-1.0f, 0.0f, 0.0f)
+	);
+	Application::sceneSetting.dirLights[1] = DirectionalLight(
+		Math::vec3(1.0f), Math::vec3(1.0f, 0.0f, 0.0f)
+	);
+	Application::sceneSetting.dirLights[2] = DirectionalLight(
+		Math::vec3(1.0f), Math::vec3(0.0f, -1.0f, 0.0f)
+	);
 
-	Application::sceneSetting.lights[0].radiance = Math::vec3(1.0f);
-	Application::sceneSetting.lights[1].radiance = Math::vec3(1.0f);
-	Application::sceneSetting.lights[2].radiance = Math::vec3(1.0f);
+	Application::sceneSetting.ptLights[0] = PointLight(
+		Math::vec3(1.0f), Math::vec3(-150.0f, 0.0f, 0.0f)
+	);
+	Application::sceneSetting.ptLights[1] = PointLight(
+		Math::vec3(1.0f), Math::vec3(150.0f, 0.0f, 0.0f)
+	);
+	Application::sceneSetting.ptLights[2] = PointLight(
+		Math::vec3(1.0f), Math::vec3(0.0f,-150.0f, 0.0f)
+	);
+
 }

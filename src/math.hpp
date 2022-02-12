@@ -1,7 +1,7 @@
 #pragma once
 
 #include<vector>
-
+#include<iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
@@ -64,6 +64,11 @@ namespace Math {
 			res.normalize();
 			return res;
 		}
+
+		friend std::ostream& operator<<(std::ostream& os, const vec3& v) {
+			os << "(" << v.data[0] << " " << v.data[1] << ' ' << v.data[2] << ')';
+			return os;
+		};
 	};
 }
 

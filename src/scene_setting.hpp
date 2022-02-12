@@ -9,12 +9,9 @@ class SceneSettings
 {
 public:
 	static const int NumLights = 3;
-	/*struct dirLight {
-		std::vector<float> radiance;
-		std::vector<float> direction;
-		bool enabled = false;
-	} lights[NumLights];*/
-	DirectionalLight lights[NumLights];
+	DirectionalLight dirLights[NumLights];
+	PointLight ptLights[NumLights];
+
 	char* envName;
 	char* preEnv;
 	std::vector<char*> envNames;

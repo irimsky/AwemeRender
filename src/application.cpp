@@ -116,11 +116,11 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 
 		// µ∆π‚…Ë÷√
 		if (key == GLFW_KEY_F1)
-			light = &sceneSetting.lights[0];
+			light = &sceneSetting.dirLights[0];
 		if (key == GLFW_KEY_F2) 
-			light = &sceneSetting.lights[1];
+			light = &sceneSetting.dirLights[1];
 		if (key == GLFW_KEY_F3) 
-			light = &sceneSetting.lights[2];
+			light = &sceneSetting.dirLights[2];
 		
 		
 		if (light) {
