@@ -56,10 +56,10 @@ Mesh::Mesh(const aiMesh* mesh)
 			vertex.texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
 		}
         // 不是所有模型都有切线，assimp会自动计算（aiProcess_CalcTangentSpace）
-        if (mesh->HasTangentsAndBitangents()) {
-			vertex.tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
-			vertex.bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
-		}
+        //if (mesh->HasTangentsAndBitangents()) {
+		//	vertex.tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
+		//	vertex.bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
+		//}
 		m_vertices.push_back(vertex);
 	}
 
@@ -84,7 +84,7 @@ void Mesh::renderSphere()
 
         std::vector<glm::vec3> positions;
         std::vector<glm::vec2> uv;
-        std::vector<glm::vec3> normals, tangents, bitangents;
+        std::vector<glm::vec3> normals;
         std::vector<unsigned int> indices;
 
         const unsigned int X_SEGMENTS = 64;
@@ -107,8 +107,6 @@ void Mesh::renderSphere()
                 positions.push_back(glm::vec3(xPos, yPos, zPos));
                 uv.push_back(glm::vec2(xSegment, ySegment));
                 normals.push_back(normal);
-                tangents.push_back(tangent);
-                bitangents.push_back(bitangent);
             }
         }
 
@@ -152,35 +150,19 @@ void Mesh::renderSphere()
                 data.push_back(uv[i].x);
                 data.push_back(uv[i].y);
             }
-            if (tangents.size() > 0)
-            {
-                data.push_back(tangents[i].x);
-                data.push_back(tangents[i].y);
-                data.push_back(tangents[i].z);
-            }
-            if (bitangents.size() > 0)
-            {
-                data.push_back(bitangents[i].x);
-                data.push_back(bitangents[i].y);
-                data.push_back(bitangents[i].z);
-            }
         }
         glBindVertexArray(sphereVAO);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), &data[0], GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-        unsigned int stride = (3 + 2 + 3 + 3 + 3) * sizeof(float);
+        unsigned int stride = (3 + 2 + 3) * sizeof(float);
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void*)(11 * sizeof(float)));
     }
 
     glBindVertexArray(sphereVAO);

@@ -3,8 +3,6 @@
 layout(location=0) in vec3 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec2 texcoord;
-layout(location=3) in vec3 tangent;
-layout(location=4) in vec3 bitangent;
 
 layout(binding=9) uniform sampler2D heightTexture;
 uniform bool haveHeight;
@@ -27,14 +25,13 @@ void main()
 {
 	
 	vout.texcoord = vec2(texcoord.x, 1.0-texcoord.y);
-
 	vout.normal = mat3(model) *  normal;
 	
 	if(haveHeight)
 	{
 		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
 		float df = dv.x;
-		vec3 newPos = normal * df * 0.1 + position;
+		vec3 newPos = normal * df * 0.05 + position;
 		vout.position = vec3(model * vec4(newPos, 1.0));
 		gl_Position = projection * view * model * vec4(newPos, 1.0);
 	}
