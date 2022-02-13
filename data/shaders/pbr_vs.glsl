@@ -6,6 +6,8 @@ layout(location=2) in vec2 texcoord;
 layout(location=3) in vec3 tangent;
 layout(location=4) in vec3 bitangent;
 
+layout(binding=9) uniform sampler2D heightTexture;
+uniform bool haveHeight;
 
 layout(std140, binding=0) uniform TransformUniforms
 {
@@ -23,10 +25,22 @@ layout(location=0) out Vertex
 
 void main()
 {
-	vout.position = vec3(model * vec4(position, 1.0));
+	
 	vout.texcoord = vec2(texcoord.x, 1.0-texcoord.y);
 
 	vout.tangentBasis = mat3(model) * mat3(tangent, bitangent, normal);
 
-	gl_Position = projection * view * model * vec4(position, 1.0);
+
+	if(haveHeight)
+	{
+		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
+		float df = dv.x;
+		vec3 newPos = normal * df * 0.3 + position;
+		vout.position = vec3(model * vec4(newPos, 1.0));
+		gl_Position = projection * view * model * vec4(newPos, 1.0);
+	}
+	else{
+		vout.position = vec3(model * vec4(position, 1.0));
+		gl_Position = projection * view * model * vec4(position, 1.0);
+	}
 }

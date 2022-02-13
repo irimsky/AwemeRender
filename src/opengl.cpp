@@ -266,6 +266,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(6, m_BRDF_LUT.id);
 	glBindTextureUnit(7, m_occlusionTexture.id);
 	glBindTextureUnit(8, m_emissionTexture.id);
+	glBindTextureUnit(9, m_heightTexture.id);
 	
 	if (scene.objType == Mesh::ImportModel) {
 		glBindVertexArray(m_pbrModel.vao);
@@ -505,6 +506,7 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 	deleteTexture(m_roughnessTexture);
 	deleteTexture(m_emissionTexture);
 	deleteTexture(m_occlusionTexture);
+	deleteTexture(m_heightTexture);
 
 	std::string modelPath = "./data/models/";
 	modelPath += modelName;
@@ -609,6 +611,18 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 		std::cout << "No Emission Texture" << std::endl;
 		m_pbrShader.setBool("haveEmission", false);
 	} 
+
+	try {
+		m_heightTexture = createTexture(
+			Image::fromFile(modelPath + "_height" + scene.texExt, 1),
+			GL_RED, GL_R8
+		);
+		m_pbrShader.setBool("haveHeight", true);
+	}
+	catch (std::runtime_error) {
+		std::cout << "No Height Texture" << std::endl;
+		m_pbrShader.setBool("haveHeight", false);
+	}
  }
 
 void Renderer::loadSceneHdr(const std::string& filename)
