@@ -165,6 +165,7 @@
     <ClCompile Include="lib\Include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="lib\Include\stb\libstb.c" />
     <ClCompile Include="src\application.cpp" />
+    <ClCompile Include="src\FBO.cpp" />
     <ClCompile Include="src\image.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\mesh.cpp" />
@@ -184,6 +185,7 @@
     <ClInclude Include="lib\Include\imgui\imstb_truetype.h" />
     <ClInclude Include="src\application.hpp" />
     <ClInclude Include="src\camera.hpp" />
+    <ClInclude Include="src\FBO.hpp" />
     <ClInclude Include="src\image.hpp" />
     <ClInclude Include="src\light.hpp" />
     <ClInclude Include="src\math.hpp" />
