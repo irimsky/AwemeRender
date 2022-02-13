@@ -2,6 +2,7 @@
 
 #include "shader.hpp"
 #include "camera.hpp"
+#include "texture.hpp"
 #include "scene_setting.hpp"
 
 #include <string>
@@ -28,13 +29,6 @@ struct FrameBuffer
 	int samples;
 };
 
-struct Texture
-{
-	Texture() : id(0) {}
-	GLuint id;
-	int width, height;
-	int levels;
-};
 
 class Renderer
 {
@@ -47,10 +41,6 @@ public:
 	void shutdown();
 
 private:
-	Texture createTexture(GLenum target, int width, int height, GLenum internalformat, int levels = 0) const;
-	Texture createTexture(const std::shared_ptr<class Image>& image, GLenum format, GLenum internalformat, int levels = 0) const;
-	static void deleteTexture(Texture& texture);
-
 	static FrameBuffer createFrameBuffer(int width, int height, int samples, GLenum colorFormat, GLenum depthstencilFormat);
 	static void resolveFramebuffer(const FrameBuffer& srcfb, const FrameBuffer& dstfb);
 	static void deleteFrameBuffer(FrameBuffer& fb);

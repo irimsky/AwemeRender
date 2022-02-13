@@ -1,7 +1,6 @@
 #pragma once
 #include "opengl.hpp"
 
-
 class Application
 {
 public:

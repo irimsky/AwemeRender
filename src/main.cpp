@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "application.hpp"
-#include "opengl.hpp"
 #include "math.hpp"
 
 //#define MY_TEST
