@@ -14,7 +14,7 @@ public:
 
 Texture createTexture(
 	GLenum target, int width, int height, GLenum internalformat,
-	int levels = 0, float maxAnisotropy = 1.0f
+	int levels = 0
 );
 
 Texture createTexture(

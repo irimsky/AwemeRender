@@ -84,14 +84,6 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-float Fwin(float d, float radius) {
-	float ratio = d / radius;
-	float ratio2 = ratio * ratio;
-	float ratio4 = ratio2 * ratio2;
-	float falloff = max(0, 1 - ratio4);
-	return falloff * falloff;
-}
-
 void main()
 {
 	vec3 albedo = texture(albedoTexture, vin.texcoord).rgb;

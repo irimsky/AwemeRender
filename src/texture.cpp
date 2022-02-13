@@ -1,7 +1,7 @@
 #include "texture.hpp"
 
 Texture createTexture(GLenum target, int width, int height, GLenum internalformat,
-	int levels, float maxAnisotropy)
+	int levels)
 {
 	Texture texture;
 	texture.width = width;
@@ -12,7 +12,11 @@ Texture createTexture(GLenum target, int width, int height, GLenum internalforma
 	glTextureStorage2D(texture.id, texture.levels, internalformat, width, height);
 	glTextureParameteri(texture.id, GL_TEXTURE_MIN_FILTER, texture.levels > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 	glTextureParameteri(texture.id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// 最大各向异性层数
+	float maxAnisotropy;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
 	glTextureParameterf(texture.id, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy);
+	
 	return texture;
 }
 

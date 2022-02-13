@@ -31,16 +31,16 @@ void main()
 	vout.tangentBasis = mat3(model) * mat3(tangent, bitangent, normal);
 
 
-	if(haveHeight)
-	{
-		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
-		float df = dv.x;
-		vec3 newPos = normal * df * 0.3 + position;
-		vout.position = vec3(model * vec4(newPos, 1.0));
-		gl_Position = projection * view * model * vec4(newPos, 1.0);
-	}
-	else{
+//	if(haveHeight)
+//	{
+//		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
+//		float df = dv.x;
+//		vec3 newPos = normal * df * 0.1 + position;
+//		vout.position = vec3(model * vec4(newPos, 1.0));
+//		gl_Position = projection * view * model * vec4(newPos, 1.0);
+//	}
+//	else{
 		vout.position = vec3(model * vec4(position, 1.0));
 		gl_Position = projection * view * model * vec4(position, 1.0);
-	}
+//	}
 }
