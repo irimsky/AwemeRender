@@ -52,9 +52,9 @@ void init()
 	else
 		Application::sceneSetting.objType = Mesh::ImportModel;
 
-	Application::sceneSetting.objectScale = 25.0;
-	Application::sceneSetting.objectPitch = 0;
-	Application::sceneSetting.objectYaw = -90;
+	Application::sceneSetting.objectScale = 1.0f;
+	Application::sceneSetting.objectPitch = 0.0f;
+	Application::sceneSetting.objectYaw = 0.0f;
 
 	// π‚’’…Ë÷√
 	Application::sceneSetting.dirLights[0] = DirectionalLight(
@@ -68,13 +68,13 @@ void init()
 	);
 
 	Application::sceneSetting.ptLights[0] = PointLight(
-		Math::vec3(1.0f), Math::vec3(-150.0f, 0.0f, 0.0f)
+		Math::vec3(1.0f), Math::vec3(-15.0f, 0.0f, 0.0f)
 	);
 	Application::sceneSetting.ptLights[1] = PointLight(
-		Math::vec3(1.0f), Math::vec3(150.0f, 0.0f, 0.0f)
+		Math::vec3(1.0f), Math::vec3(15.0f, 0.0f, 0.0f)
 	);
 	Application::sceneSetting.ptLights[2] = PointLight(
-		Math::vec3(1.0f), Math::vec3(0.0f,-150.0f, 0.0f)
+		Math::vec3(1.0f), Math::vec3(0.0f,-15.0f, 0.0f)
 	);
 
 }

@@ -191,6 +191,7 @@
     <ClInclude Include="src\renderer.hpp" />
     <ClInclude Include="src\scene_setting.hpp" />
     <ClInclude Include="src\shader.hpp" />
+    <ClInclude Include="src\texture.hpp" />
     <ClInclude Include="src\utils.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -30,7 +30,7 @@ layout(location=0) out vec4 color;
 
 layout(std140, binding=1) uniform ShadingUniforms
 {
-	DirectionalLight lights[NumLights];
+	DirectionalLight dirLights[NumLights];
 	PointLight ptLights[NumLights];
 	vec3 eyePosition;
 };
@@ -118,8 +118,8 @@ void main()
 	// Æ½ÐÐ¹â
 	for(int i=0; i<NumLights; ++i)
 	{
-		vec3 L = -lights[i].direction;
-		vec3 Lradiance = lights[i].radiance;
+		vec3 L = -dirLights[i].direction;
+		vec3 Lradiance = dirLights[i].radiance;
 		vec3 H = normalize(V + L);
 
 		float NdotL = max(0.0, dot(N, L));

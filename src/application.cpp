@@ -7,7 +7,7 @@
 const int ScreenWidth = 1200;
 const int ScreenHeight = 800;
 const int DisplaySamples = 16;
-const float MoveSpeed = 50;
+const float MoveSpeed = 2.5;
 const float OrbitSpeed = 0.8;
 
 float Application::lastX = ScreenWidth / 2.0f;
@@ -18,7 +18,7 @@ float Application::deltaTime = 0.0f;
 float Application::lastFrame = 0.0f;
 
 SceneSettings Application::sceneSetting;
-Camera Application::m_camera(glm::vec3(0.0f, 0.0f, 150.0f));
+Camera Application::m_camera(glm::vec3(0.0f, 0.0f, 4.5f));
 
 Application::Application()
 	: m_window(nullptr)

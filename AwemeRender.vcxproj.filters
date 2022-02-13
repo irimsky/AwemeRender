@@ -131,6 +131,9 @@
     <ClInclude Include="src\light.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\texture.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="data\shaders\cs_equirect2cube.glsl">

@@ -217,7 +217,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		* glm::scale(glm::mat4(1.0f), glm::vec3(scene.objectScale));
 
 	transformUniforms.view = camera.GetViewMatrix();
-	transformUniforms.projection = glm::perspective(glm::radians(camera.Zoom), float(m_framebuffer.width)/float(m_framebuffer.height), 1.0f, 1000.0f);
+	transformUniforms.projection = glm::perspective(glm::radians(camera.Zoom), float(m_framebuffer.width)/float(m_framebuffer.height), 0.1f, 1000.0f);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
 	ShadingUB shadingUniforms;
@@ -587,9 +587,9 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 		m_pbrModel = createMeshBuffer(Mesh::fromFile(modelPath + scene.objExt));
 
 	if (modelName == "cerberus")
-		scene.objectScale = 1.0;
+		scene.objectScale = 2.2f;
 	else
-		scene.objectScale = 25.0;
+		scene.objectScale = 1.0f;
 
 	// º”‘ÿŒ∆¿ÌÃ˘Õº
 	std::cout << "Start Loading Textures:" << std::endl;
