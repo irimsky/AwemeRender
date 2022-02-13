@@ -22,7 +22,7 @@ layout(location=0) in Vertex
 {
 	vec3 position;
 	vec2 texcoord;
-	mat3 tangentBasis;
+	vec3 normal;
 } vin;
 
 layout(location=0) out vec4 color;
@@ -84,6 +84,24 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+vec3 getNormalFromMap()
+{
+
+    vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(vin.position);
+    vec3 Q2  = dFdy(vin.position);
+    vec2 st1 = dFdx(vin.texcoord);
+    vec2 st2 = dFdy(vin.texcoord);
+
+    vec3 N   = normalize(vin.normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+
+    return normalize(TBN * tangentNormal);
+}
+
 void main()
 {
 	vec3 albedo = texture(albedoTexture, vin.texcoord).rgb;
@@ -95,12 +113,10 @@ void main()
 		roughness = texture(roughnessTexture, vin.texcoord).r;
 
 	vec3 V = normalize(eyePosition - vin.position);
-	vec3 N = normalize(2.0 * texture(normalTexture, vin.texcoord).rgb - 1.0);
-	N = normalize(vin.tangentBasis * N);
-	
+	vec3 N = getNormalFromMap();
+	vec3 R = reflect(-V, N);
+
 	float NdotV = max(0.0, dot(N, V));
-		
-	vec3 R = 2.0 * NdotV * N - V;
 
 	// 对于金属物体，其F0用金属度插值模拟
 	vec3 F0 = mix(NonMetalF0, albedo, metalness);
@@ -196,4 +212,5 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
+//	color = vec4(N, 1.0);
 }

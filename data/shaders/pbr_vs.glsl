@@ -20,7 +20,7 @@ layout(location=0) out Vertex
 {
 	vec3 position;
 	vec2 texcoord;
-	mat3 tangentBasis;
+	vec3 normal;
 } vout;
 
 void main()
@@ -28,19 +28,18 @@ void main()
 	
 	vout.texcoord = vec2(texcoord.x, 1.0-texcoord.y);
 
-	vout.tangentBasis = mat3(model) * mat3(tangent, bitangent, normal);
-
-
-//	if(haveHeight)
-//	{
-//		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
-//		float df = dv.x;
-//		vec3 newPos = normal * df * 0.1 + position;
-//		vout.position = vec3(model * vec4(newPos, 1.0));
-//		gl_Position = projection * view * model * vec4(newPos, 1.0);
-//	}
-//	else{
+	vout.normal = mat3(model) *  normal;
+	
+	if(haveHeight)
+	{
+		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
+		float df = dv.x;
+		vec3 newPos = normal * df * 0.1 + position;
+		vout.position = vec3(model * vec4(newPos, 1.0));
+		gl_Position = projection * view * model * vec4(newPos, 1.0);
+	}
+	else{
 		vout.position = vec3(model * vec4(position, 1.0));
 		gl_Position = projection * view * model * vec4(position, 1.0);
-//	}
+	}
 }
