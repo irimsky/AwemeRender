@@ -162,8 +162,8 @@ protected:
             if (!success)
             {
                 glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-                throw std::runtime_error(type + "Shader Compilation Error");
                 std::cout << "ERROR::SHADER_COMPILATION_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+                throw std::runtime_error(type + "Shader Compilation Error");
             }
         }
         else
@@ -172,8 +172,8 @@ protected:
             if (!success)
             {
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-                throw std::runtime_error("Program linking error");
                 std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
+                throw std::runtime_error("Program linking error");
             }
         }
     }

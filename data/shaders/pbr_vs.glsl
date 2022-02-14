@@ -19,6 +19,8 @@ layout(location=0) out Vertex
 	vec3 position;
 	vec2 texcoord;
 	vec3 normal;
+	float height;
+	vec3 oriPosition;
 } vout;
 
 void main()
@@ -32,11 +34,16 @@ void main()
 		vec4 dv = texture2D(heightTexture, vout.texcoord.xy);
 		float df = dv.x;
 		vec3 newPos = normal * df * 0.05 + position;
+
+		vout.height = df * 0.05;
+		vout.oriPosition = vec3(model * vec4(position, 1.0));
 		vout.position = vec3(model * vec4(newPos, 1.0));
+
 		gl_Position = projection * view * model * vec4(newPos, 1.0);
 	}
 	else{
 		vout.position = vec3(model * vec4(position, 1.0));
 		gl_Position = projection * view * model * vec4(position, 1.0);
+		vout.height = -1;
 	}
 }

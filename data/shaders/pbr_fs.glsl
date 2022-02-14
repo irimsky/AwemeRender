@@ -23,6 +23,8 @@ layout(location=0) in Vertex
 	vec3 position;
 	vec2 texcoord;
 	vec3 normal;
+	float height;
+	vec3 oriPosition;
 } vin;
 
 layout(location=0) out vec4 color;
@@ -44,12 +46,13 @@ layout(binding=5) uniform samplerCube irradianceTexture;
 layout(binding=6) uniform sampler2D specularBRDF_LUT;
 layout(binding=7) uniform sampler2D occlusionTexture;
 layout(binding=8) uniform sampler2D emmisiveTexture;
+layout(binding=9) uniform sampler2D heightTexture;
 
 uniform bool haveMetalness;
 uniform bool haveRoughness;
 uniform bool haveOcclusion;
 uniform bool haveEmission;
-
+uniform bool haveHeight;
 
 float NDF_GGX(float cosLh, float roughness)
 {
@@ -84,6 +87,24 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+vec3 getNewNormal()
+{
+	float height = vin.height;
+	float du = dFdx(height);
+	float dv = dFdy(height);
+	vec3 newNormal = vec3(-du, -dv, 1);
+	vec3 Q1  = dFdx(vin.oriPosition);
+    vec3 Q2  = dFdy(vin.oriPosition);
+    vec2 st1 = dFdx(vin.texcoord);
+    vec2 st2 = dFdy(vin.texcoord);
+
+    vec3 N  = normalize(vin.normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+	return normalize(TBN * newNormal);
+}
+
 vec3 getNormalFromMap()
 {
 
@@ -93,14 +114,19 @@ vec3 getNormalFromMap()
     vec3 Q2  = dFdy(vin.position);
     vec2 st1 = dFdx(vin.texcoord);
     vec2 st2 = dFdy(vin.texcoord);
-
-    vec3 N   = normalize(vin.normal);
+	
+    vec3 N  = normalize(vin.normal);
+	if(haveHeight)
+		N = getNewNormal();
+	
     vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+	
     vec3 B  = -normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
-
     return normalize(TBN * tangentNormal);
 }
+
+
 
 void main()
 {
@@ -111,7 +137,7 @@ void main()
 		metalness = texture(metalnessTexture, vin.texcoord).r;
 	if(haveRoughness)
 		roughness = texture(roughnessTexture, vin.texcoord).r;
-
+	
 	vec3 V = normalize(eyePosition - vin.position);
 	vec3 N = getNormalFromMap();
 	vec3 R = reflect(-V, N);
@@ -212,5 +238,4 @@ void main()
 
 	// ×îÖÕ½á¹û
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(N, 1.0);
 }
