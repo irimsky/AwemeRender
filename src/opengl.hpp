@@ -5,6 +5,7 @@
 #include "texture.hpp"
 #include "FBO.hpp"
 #include "scene_setting.hpp"
+#include "meshbuffer.hpp"
 
 #include <string>
 #include <glm/mat4x4.hpp>
@@ -13,12 +14,6 @@
 
 struct GLFWwindow;
 
-struct MeshBuffer
-{
-	MeshBuffer() : vbo(0), ibo(0), vao(0) {}
-	GLuint vbo, ibo, vao;
-	GLuint numElements;
-};
 
 class Renderer
 {
@@ -31,8 +26,7 @@ public:
 	void shutdown();
 
 private:
-	static MeshBuffer createMeshBuffer(const std::shared_ptr<class Mesh>& mesh);
-	static void deleteMeshBuffer(MeshBuffer& buffer);
+
 
 	static GLuint createUniformBuffer(const void* data, size_t size);
 

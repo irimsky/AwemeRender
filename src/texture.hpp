@@ -10,6 +10,8 @@ public:
 	GLuint id;
 	int width, height;
 	int levels;
+
+	bool exist();
 };
 
 Texture createTexture(

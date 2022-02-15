@@ -42,3 +42,8 @@ void deleteTexture(Texture& texture)
 	glDeleteTextures(1, &texture.id);
 	std::memset(&texture, 0, sizeof(Texture));
 }
+
+bool Texture::exist()
+{
+	return id != 0;
+}

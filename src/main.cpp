@@ -4,6 +4,7 @@
 
 #include "application.hpp"
 #include "math.hpp"
+#include "model.hpp"
 
 //#define MY_TEST
 
@@ -12,12 +13,8 @@ void init();
 int main(int argc, char* argv[])
 {
 #ifdef MY_TEST
-	Math::vec3 v(1, 2, 3);
-	std::cout << v << std::endl;
-	DirectionalLight dl;
-	std::cout << dl.radiance << std::endl;
-	auto vv = v.normalized();
-	std::cout << vv.x() << ' ' << vv.y() << ' ' << vv.z() << std::endl;
+	Model t("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj");
+	std::cout << t.name << std::endl;
 	return 0;
 #endif
 	init();
