@@ -34,3 +34,18 @@ bool Model::haveHeight()
 {
 	return heightTexture.exist();
 }
+
+void deleteModel(Model& model)
+{
+	deleteMeshBuffer(model.pbrModel);
+	deleteTexture(model.albedoTexture);
+	deleteTexture(model.normalTexture);
+	deleteTexture(model.metalnessTexture);
+	deleteTexture(model.roughnessTexture);
+	deleteTexture(model.emissionTexture);
+	deleteTexture(model.occlusionTexture);
+	deleteTexture(model.heightTexture);
+	
+}
+
+

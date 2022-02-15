@@ -116,18 +116,23 @@ void Renderer::shutdown()
 	glDeleteBuffers(1, &m_shadingUB);
 
 	deleteMeshBuffer(m_skybox);
-	deleteMeshBuffer(m_pbrModel);
+	for (int i = 0; i < m_models.size(); ++i)
+	{
+		deleteModel(m_models[i]);
+	}
+
+	//deleteMeshBuffer(m_pbrModel);
 
 	deleteTexture(m_envTexture);
 	deleteTexture(m_irmapTexture);
 	deleteTexture(m_BRDF_LUT);
 
-	deleteTexture(m_albedoTexture);
+	/*deleteTexture(m_albedoTexture);
 	deleteTexture(m_normalTexture);
 	deleteTexture(m_metalnessTexture);
 	deleteTexture(m_roughnessTexture);
 	deleteTexture(m_emissionTexture);
-	deleteTexture(m_occlusionTexture);
+	deleteTexture(m_occlusionTexture);*/
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
@@ -191,11 +196,11 @@ void Renderer::setup(const SceneSettings& scene)
 
 	// 加载PBR模型以及贴图
 	//loadModels(scene.objName, const_cast<SceneSettings&>(scene));
-	m_model = Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj");
-	
-	/*Model t("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj");
-	std::cout << t.name << std::endl;*/
 
+	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true));
+	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true));
+	m_models[1].position = Math::vec3(1.0f);
+	
 	// 加载环境贴图，同时预计算prefilter以及irradiance map
 	loadSceneHdr(scene.envName);
 
@@ -210,10 +215,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 {
 	
 	TransformUB transformUniforms;
-	transformUniforms.model = glm::translate(glm::mat4(1.0f), m_model.position.toGlmVec()) *
-		glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(m_model.scale));
-
 	transformUniforms.view = camera.GetViewMatrix();
 	transformUniforms.projection = glm::perspective(glm::radians(camera.Zoom), float(m_framebuffer.width)/float(m_framebuffer.height), 0.1f, 1000.0f);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
@@ -260,7 +261,93 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 模型
 	m_pbrShader.use();
 	glEnable(GL_DEPTH_TEST);
-	
+	glBindTextureUnit(4, m_envTexture.id);
+	glBindTextureUnit(5, m_irmapTexture.id);
+	glBindTextureUnit(6, m_BRDF_LUT.id);
+	for (int i = 0; i < 2; ++i) {
+		transformUniforms.model = glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
+			glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
+			* glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
+		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+		if (m_models[i].haveAlbedo())
+		{
+			m_pbrShader.setBool("haveAlbedo", true);
+			glBindTextureUnit(0, m_models[i].albedoTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveAlbedo", false);
+			m_pbrShader.setVec3("commonColor", m_models[i].color.toGlmVec());
+		}
+
+		if (m_models[i].haveNormal())
+		{
+			m_pbrShader.setBool("haveNormal", true);
+			glBindTextureUnit(1, m_models[i].normalTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveNormal", false);
+		}
+
+		if (m_models[i].haveMetalness())
+		{
+			m_pbrShader.setBool("haveMetalness", true);
+			glBindTextureUnit(2, m_models[i].metalnessTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveMetalness", false);
+		}
+
+		if (m_models[i].haveRoughness())
+		{
+			m_pbrShader.setBool("haveRoughness", true);
+			glBindTextureUnit(3, m_models[i].roughnessTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveRoughness", false);
+		}
+
+		if (m_models[i].haveOcclusion())
+		{
+			m_pbrShader.setBool("haveOcclusion", true);
+			glBindTextureUnit(7, m_models[i].occlusionTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveOcclusion", false);
+		}
+
+		if (m_models[i].haveEmmission())
+		{
+			m_pbrShader.setBool("haveEmission", true);
+			glBindTextureUnit(8, m_models[i].emissionTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveEmission", false);
+		}
+
+		if (m_models[i].haveHeight())
+		{
+			m_pbrShader.setBool("haveHeight", true);
+			glBindTextureUnit(9, m_models[i].heightTexture.id);
+		}
+		else
+		{
+			m_pbrShader.setBool("haveHeight", false);
+		}
+
+		glBindVertexArray(m_models[i].pbrModel.vao);
+		glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
+		
+	}
+	/*transformUniforms.model = glm::translate(glm::mat4(1.0f), m_model.position.toGlmVec()) *
+		glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
+		* glm::scale(glm::mat4(1.0f), glm::vec3(m_model.scale));
+
 	if (m_model.haveAlbedo())
 	{
 		m_pbrShader.setBool("haveAlbedo", true);
@@ -304,9 +391,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 
 	glBindTextureUnit(4, m_envTexture.id);
 	glBindTextureUnit(5, m_irmapTexture.id);
-	glBindTextureUnit(6, m_BRDF_LUT.id);
+	glBindTextureUnit(6, m_BRDF_LUT.id);*/
 
-	if (m_model.haveOcclusion())
+	/*if (m_model.haveOcclusion())
 	{
 		m_pbrShader.setBool("haveOcclusion", true);
 		glBindTextureUnit(7, m_occlusionTexture.id);
@@ -334,7 +421,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	else
 	{
 		m_pbrShader.setBool("haveHeight", false);
-	}
+	}*/
 
 	/*glBindTextureUnit(0, m_albedoTexture.id);
 	glBindTextureUnit(1, m_normalTexture.id);
@@ -347,15 +434,15 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(8, m_emissionTexture.id);
 	glBindTextureUnit(9, m_heightTexture.id);*/
 	
-	if (scene.objType == Mesh::ImportModel) {
-		glBindVertexArray(m_model.pbrModel.vao);
-		glDrawElements(GL_TRIANGLES, m_model.pbrModel.numElements, GL_UNSIGNED_INT, 0);
-		/*glBindVertexArray(m_pbrModel.vao);
-		glDrawElements(GL_TRIANGLES, m_pbrModel.numElements, GL_UNSIGNED_INT, 0);*/
-	}
-	else if (scene.objType == Mesh::Ball) {
-		Mesh::renderSphere();
-	}
+	//if (scene.objType == Mesh::ImportModel) {
+	//	glBindVertexArray(m_model.pbrModel.vao);
+	//	glDrawElements(GL_TRIANGLES, m_model.pbrModel.numElements, GL_UNSIGNED_INT, 0);
+	//	/*glBindVertexArray(m_pbrModel.vao);
+	//	glDrawElements(GL_TRIANGLES, m_pbrModel.numElements, GL_UNSIGNED_INT, 0);*/
+	//}
+	//else if (scene.objType == Mesh::Ball) {
+	//	Mesh::renderSphere();
+	//}
 	
 	// 多重采样
 	resolveFramebuffer(m_framebuffer, m_resolveFramebuffer);

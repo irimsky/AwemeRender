@@ -55,6 +55,7 @@ private:
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;
 	Model m_model;
+	std::vector<Model> m_models;
 
 	GLuint m_quadVAO;
 

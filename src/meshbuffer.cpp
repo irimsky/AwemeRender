@@ -24,7 +24,6 @@ MeshBuffer createMeshBuffer(const std::shared_ptr<class Mesh>& mesh)
 	return buffer;
 }
 
-
 void deleteMeshBuffer(MeshBuffer& buffer)
 {
 	if (buffer.vao) {
