@@ -10,7 +10,7 @@ bool Model::haveNormal()
 	return normalTexture.exist();
 }
 
-bool Model::haveMetalnes()
+bool Model::haveMetalness()
 {
 	return metalnessTexture.exist();
 }

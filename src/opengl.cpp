@@ -8,7 +8,6 @@
 #include <imgui_impl_glfw.h>
 
 #include <GLFW/glfw3.h>
-#include "model.hpp"
 
 
 struct TransformUB
@@ -191,8 +190,9 @@ void Renderer::setup(const SceneSettings& scene)
 	m_skybox = createMeshBuffer(Mesh::fromFile("./data/skybox.obj"));
 
 	// 加载PBR模型以及贴图
-	loadModels(scene.objName, const_cast<SceneSettings&>(scene));
-
+	//loadModels(scene.objName, const_cast<SceneSettings&>(scene));
+	m_model = Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj");
+	
 	/*Model t("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj");
 	std::cout << t.name << std::endl;*/
 
@@ -210,9 +210,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 {
 	
 	TransformUB transformUniforms;
-	transformUniforms.model = 
+	transformUniforms.model = glm::translate(glm::mat4(1.0f), m_model.position.toGlmVec()) *
 		glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(scene.objectScale));
+		* glm::scale(glm::mat4(1.0f), glm::vec3(m_model.scale));
 
 	transformUniforms.view = camera.GetViewMatrix();
 	transformUniforms.projection = glm::perspective(glm::radians(camera.Zoom), float(m_framebuffer.width)/float(m_framebuffer.height), 0.1f, 1000.0f);
@@ -260,7 +260,83 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 模型
 	m_pbrShader.use();
 	glEnable(GL_DEPTH_TEST);
-	glBindTextureUnit(0, m_albedoTexture.id);
+	
+	if (m_model.haveAlbedo())
+	{
+		m_pbrShader.setBool("haveAlbedo", true);
+		glBindTextureUnit(0, m_albedoTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveAlbedo", false);
+		m_pbrShader.setVec3("commonColor", m_model.color.toGlmVec());
+	}
+
+	if (m_model.haveNormal())
+	{
+		m_pbrShader.setBool("haveNormal", true);
+		glBindTextureUnit(1, m_normalTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveNormal", false);
+	}
+
+	if (m_model.haveMetalness())
+	{
+		m_pbrShader.setBool("haveMetalness", true);
+		glBindTextureUnit(2, m_metalnessTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveMetalness", false);
+	}
+
+	if (m_model.haveRoughness())
+	{
+		m_pbrShader.setBool("haveRoughness", true);
+		glBindTextureUnit(3, m_roughnessTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveRoughness", false);
+	}
+
+	glBindTextureUnit(4, m_envTexture.id);
+	glBindTextureUnit(5, m_irmapTexture.id);
+	glBindTextureUnit(6, m_BRDF_LUT.id);
+
+	if (m_model.haveOcclusion())
+	{
+		m_pbrShader.setBool("haveOcclusion", true);
+		glBindTextureUnit(7, m_occlusionTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveRoughness", false);
+	}
+
+	if (m_model.haveEmmission())
+	{
+		m_pbrShader.setBool("haveEmission", true);
+		glBindTextureUnit(8, m_emissionTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveEmission", false);
+	}
+
+	if (m_model.haveHeight())
+	{
+		m_pbrShader.setBool("haveHeight", true);
+		glBindTextureUnit(9, m_heightTexture.id);
+	}
+	else
+	{
+		m_pbrShader.setBool("haveHeight", false);
+	}
+
+	/*glBindTextureUnit(0, m_albedoTexture.id);
 	glBindTextureUnit(1, m_normalTexture.id);
 	glBindTextureUnit(2, m_metalnessTexture.id);
 	glBindTextureUnit(3, m_roughnessTexture.id);
@@ -269,11 +345,13 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(6, m_BRDF_LUT.id);
 	glBindTextureUnit(7, m_occlusionTexture.id);
 	glBindTextureUnit(8, m_emissionTexture.id);
-	glBindTextureUnit(9, m_heightTexture.id);
+	glBindTextureUnit(9, m_heightTexture.id);*/
 	
 	if (scene.objType == Mesh::ImportModel) {
-		glBindVertexArray(m_pbrModel.vao);
-		glDrawElements(GL_TRIANGLES, m_pbrModel.numElements, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(m_model.pbrModel.vao);
+		glDrawElements(GL_TRIANGLES, m_model.pbrModel.numElements, GL_UNSIGNED_INT, 0);
+		/*glBindVertexArray(m_pbrModel.vao);
+		glDrawElements(GL_TRIANGLES, m_pbrModel.numElements, GL_UNSIGNED_INT, 0);*/
 	}
 	else if (scene.objType == Mesh::Ball) {
 		Mesh::renderSphere();
@@ -356,7 +434,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 					scene.objName = scene.objNames[i];
 					if (strcmp(scene.preObj, scene.objName))
 					{
-						loadModels(scene.objName, scene);
+						//loadModels(scene.objName, scene);
 						strcpy(scene.preObj, scene.objName);
 					}
 				}

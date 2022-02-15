@@ -48,11 +48,15 @@ layout(binding=7) uniform sampler2D occlusionTexture;
 layout(binding=8) uniform sampler2D emmisiveTexture;
 layout(binding=9) uniform sampler2D heightTexture;
 
+uniform bool haveAlbedo;
+uniform bool haveNormal;
 uniform bool haveMetalness;
 uniform bool haveRoughness;
 uniform bool haveOcclusion;
 uniform bool haveEmission;
 uniform bool haveHeight;
+
+uniform vec3 commonColor;
 
 float NDF_GGX(float cosLh, float roughness)
 {
@@ -130,16 +134,26 @@ vec3 getNormalFromMap()
 
 void main()
 {
-	vec3 albedo = texture(albedoTexture, vin.texcoord).rgb;
+	vec3 albedo;
+	if(haveAlbedo)
+		albedo = texture(albedoTexture, vin.texcoord).rgb;
+	else
+		albedo = commonColor;
+
 	float metalness = 0.0;
-	float roughness = 0.5;
+	float roughness = 1.0;
 	if(haveMetalness)
 		metalness = texture(metalnessTexture, vin.texcoord).r;
 	if(haveRoughness)
 		roughness = texture(roughnessTexture, vin.texcoord).r;
 	
 	vec3 V = normalize(eyePosition - vin.position);
-	vec3 N = getNormalFromMap();
+	vec3 N;
+	if(haveNormal)
+		N = getNormalFromMap();
+	else
+		N = vin.normal;
+
 	vec3 R = reflect(-V, N);
 
 	float NdotV = max(0.0, dot(N, V));

@@ -36,10 +36,11 @@ public:
 		int dotIdx = filePath.find_last_of('\\');
 		name = filePath.substr(dotIdx + 1);
 	}
+	Model() {};
 
 	bool haveAlbedo();
 	bool haveNormal();
-	bool haveMetalnes();
+	bool haveMetalness();
 	bool haveRoughness();
 	bool haveOcclusion();
 	bool haveEmmission();
@@ -47,5 +48,5 @@ public:
 
 private:
 	static std::map<std::string, int> nameCount;
-	Model() {};
+	
 };

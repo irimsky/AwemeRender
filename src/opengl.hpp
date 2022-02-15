@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shader.hpp"
+#include "model.hpp"
 #include "camera.hpp"
 #include "texture.hpp"
 #include "FBO.hpp"
@@ -53,6 +54,7 @@ private:
 
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;
+	Model m_model;
 
 	GLuint m_quadVAO;
 
