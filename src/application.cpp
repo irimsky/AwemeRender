@@ -4,8 +4,8 @@
 
 #include "application.hpp"
 
-const int ScreenWidth = 1200;
-const int ScreenHeight = 800;
+const int ScreenWidth = 1700;
+const int ScreenHeight = ScreenWidth * 9 / 16;
 const int DisplaySamples = 16;
 const float MoveSpeed = 2.5;
 const float OrbitSpeed = 0.8;
@@ -36,6 +36,7 @@ void Application::run(const std::unique_ptr<Renderer>& renderer)
 {
 	m_window = renderer->initialize(ScreenWidth, ScreenHeight, DisplaySamples);
 
+	glfwSetWindowPos(m_window, 50, 50);
 	glfwSetWindowUserPointer(m_window, this);
 	glfwSetCursorPosCallback(m_window, Application::mousePositionCallback);
 	glfwSetScrollCallback(m_window, Application::mouseScrollCallback);
@@ -92,11 +93,12 @@ void Application::mouseScrollCallback(GLFWwindow* window, double xoffset, double
 
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
 	if (action == GLFW_PRESS) {
 
 		DirectionalLight* light = nullptr;
 
-		// “˛≤ÿ/œ‘ æ Û±Í
+		// ÈöêËóè/ÊòæÁ§∫Èº†Ê†á
 		if (key == GLFW_KEY_LEFT_ALT) {
 			showMouse = showMouse ? false : true;
 			if (showMouse)
@@ -109,12 +111,12 @@ void Application::keyCallback(GLFWwindow* window, int key, int scancode, int act
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			}
 		}
-
-		// ÕÀ≥ˆ
+		
+		// ÈÄÄÂá∫
 		if (key == GLFW_KEY_ESCAPE) 
 			glfwSetWindowShouldClose(window, true);
 
-		// µ∆π‚…Ë÷√
+		// ÁÅØÂÖâËÆæÁΩÆ
 		if (key == GLFW_KEY_F1)
 			light = &sceneSetting.dirLights[0];
 		if (key == GLFW_KEY_F2) 

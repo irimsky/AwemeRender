@@ -3,8 +3,10 @@
 #include <memory>
 #include <io.h>
 #include <cstring>
+#include <wtypes.h>
 
 #include "utils.hpp"
+
 
 std::string File::readText(const std::string& filename)
 {
@@ -39,7 +41,7 @@ std::vector<char> File::readBinary(const std::string& filename)
 std::vector<char*> File::readAllFilesInDir(const std::string& path)
 {
     long long hFile = 0;
-    //文件信息
+    //鏂囦欢淇℃伅
     struct _finddata_t fileinfo;
     std::string p;
     std::vector<char*> files;
@@ -69,7 +71,7 @@ std::vector<char*> File::readAllFilesInDir(const std::string& path)
 std::vector<char*> File::readAllDirsInDir(const std::string& path) 
 {
     long long hFile = 0;
-    //文件信息
+    //鏂囦欢淇℃伅
     struct _finddata_t fileinfo;
     std::string p;
     std::vector<char*> files;
@@ -97,7 +99,7 @@ std::vector<char*> File::readAllDirsInDir(const std::string& path)
 std::vector<char*> File::readAllFilesInDirWithExt(const std::string& path)
 {
     long long hFile = 0;
-    //文件信息
+    //鏂囦欢淇℃伅
     struct _finddata_t fileinfo;
     std::string p;
     std::vector<char*> files;
@@ -120,4 +122,27 @@ std::vector<char*> File::readAllFilesInDirWithExt(const std::string& path)
     }
 
     return files;
+}
+
+std::string File::openFileDialog()
+{
+    TCHAR szBuffer[MAX_PATH] = { 0 };
+    OPENFILENAME ofn;
+    ZeroMemory(&ofn,sizeof(OPENFILENAME));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = GetForegroundWindow();
+    ofn.lpstrFilter = TEXT("All Files(*.*)\0*.*\0");//瑕侀�夋嫨鐨勬枃浠跺悗缂�  
+    ofn.lpstrInitialDir = TEXT("./data/models");
+    ofn.lpstrFile = szBuffer;//瀛樻斁鏂囦欢鐨勭紦鍐插尯   
+    ofn.nMaxFile = sizeof(szBuffer) / sizeof(*szBuffer);
+    ofn.nFilterIndex = 0;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;//鏍囧織濡傛灉鏄閫夎鍔犱笂OFN_ALLOWMULTISELECT  
+    BOOL bSel = GetOpenFileName(&ofn);
+    if (bSel)
+    {
+        std::wstring tmp(szBuffer);
+        return std::string(tmp.begin(), tmp.end());
+    }
+    else
+        return "";
 }

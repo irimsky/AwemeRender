@@ -4,9 +4,19 @@
 #include "meshbuffer.hpp"
 
 #include <string>
-#include <map>
+#include <unordered_map>
 
 using namespace Math;
+
+// Ê®°ÂûãÁöÑË¥¥ÂõæÁ±ªÂûã
+static enum class TextureType {
+	Albedo, Normal, Metalness, Roughness, Occlusion, Emission, Height
+};
+
+static const std::vector<std::string> TextureTypeNames = {
+	"Albedo", "Normal", "Metalness", "Roughness", "Occlusion",
+	"Emission", "Height"
+};
 
 class Model {
 public:
@@ -15,11 +25,12 @@ public:
 	float scale;
 
 	std::string name;
+	bool isSelected;
+	MeshBuffer pbrModel;
 
 	
 
-	MeshBuffer pbrModel;
-
+	static const int TexCount = 7;
 	Texture albedoTexture;
 	Texture normalTexture;
 	Texture metalnessTexture;
@@ -27,16 +38,21 @@ public:
 	Texture occlusionTexture;
 	Texture emissionTexture;
 	Texture heightTexture;
+	Texture textures[TexCount];
 
-	Model(std::string filePath, bool detectTex=false) {
+	Model(std::string filePath, bool detectTex=false)
+		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)),
+		isSelected(false)
+	{
 		pbrModel = createMeshBuffer(Mesh::fromFile(filePath));
-		scale = 1.0f;
-		position = vec3(0.0f);
-		color = vec3(0.8f);
+
 		int fileIdx = filePath.find_last_of('\\');
-		name = filePath.substr((size_t)fileIdx + 1);
+		int dotIdx = filePath.find_last_of('.');
+		name = filePath.substr((size_t)fileIdx + 1, (size_t)dotIdx - fileIdx - 1);
+		name +=	std::to_string(nameCount[name]++);
+
 		if (detectTex) {
-			int dotIdx = filePath.find_last_of('.');
+			
 			std::string modelPath = filePath.substr(0, (size_t)dotIdx);
 			std::string format = filePath.substr((size_t)dotIdx);
 			std::vector<char*> modelFiles = File::readAllFilesInDirWithExt(modelPath.substr(0, fileIdx));
@@ -53,9 +69,21 @@ public:
 				}
 			}
 
-			// º”‘ÿŒ∆¿ÌÃ˘Õº
+			// Âä†ËΩΩÁ∫πÁêÜË¥¥Âõæ
 			std::cout << "Start Loading Textures:" << std::endl;
-			try {
+			
+			for (int i = 0; i < TexCount; ++i)
+			{
+				std::string tmp = TextureTypeNames[i];
+				tmp[0] = tolower(tmp[0]);
+				try {
+					loadTexture(modelPath + "_" + tmp + format, (TextureType)i);
+				}
+				catch (std::runtime_error) {
+					std::cout << "No " + TextureTypeNames[i] +" Texture" << std::endl;
+				}
+			}
+			/*try {
 				albedoTexture = createTexture(
 					Image::fromFile(modelPath + "_albedo" + format, 3),
 					GL_RGB, GL_SRGB8
@@ -124,7 +152,7 @@ public:
 			}
 			catch (std::runtime_error) {
 				std::cout << "No Height Texture" << std::endl;
-			}
+			}*/
 
 		}
 	}
@@ -137,10 +165,23 @@ public:
 	bool haveOcclusion();
 	bool haveEmmission();
 	bool haveHeight();
+	bool haveTexture(TextureType type);
 
-private:
-	static std::map<std::string, int> nameCount;
+
+	void loadTexture(std::string filePath, TextureType type);
+
 	
+
+
+protected:
+	static std::unordered_map<std::string, int> nameCount;
+	/*void loadAlbedoTexture(std::string filePath);
+	void loadNormalTexture(std::string filePath);
+	void loadMetalnessTexture(std::string filePath);
+	void loadRoughnessTexture(std::string filePath);
+	void loadOcclusionTexture(std::string filePath);
+	void loadEmmissionTexture(std::string filePath);
+	void loadHeightTexture(std::string filePath);*/
 };
 
 void deleteModel(Model& model);

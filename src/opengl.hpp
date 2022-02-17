@@ -8,9 +8,13 @@
 #include "scene_setting.hpp"
 #include "meshbuffer.hpp"
 
+#include <imgui_impl_opengl3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+
 #include <string>
 #include <glm/mat4x4.hpp>
-
+#include <stdexcept>
 
 
 struct GLFWwindow;
@@ -56,6 +60,7 @@ private:
 	MeshBuffer m_pbrModel;
 	Model m_model;
 	std::vector<Model> m_models;
+	int m_selectedIdx;
 
 	GLuint m_quadVAO;
 

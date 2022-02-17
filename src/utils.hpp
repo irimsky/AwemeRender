@@ -10,6 +10,7 @@ public:
 	static std::vector<char*> readAllFilesInDir(const std::string& path);
 	static std::vector<char*> readAllDirsInDir(const std::string& path);
 	static std::vector<char*> readAllFilesInDirWithExt(const std::string& path);
+	static std::string openFileDialog();
 };
 
 class Utility
@@ -24,7 +25,7 @@ public:
 		return (value + POT - 1) & -POT;
 	}
 
-	// ¼ÆËãÒ»¸ö³¤¿íµÄÌùÍ¼ÄÜÉú³É¶àÉÙ²ã¼¶µÄmipmap£¨Í³¼Æ×î¸ß¶ş½øÖÆÎ»Êı£©
+	// è®¡ç®—ä¸€ä¸ªé•¿å®½çš„è´´å›¾èƒ½ç”Ÿæˆå¤šå°‘å±‚çº§çš„mipmapï¼ˆç»Ÿè®¡æœ€é«˜äºŒè¿›åˆ¶ä½æ•°ï¼‰
 	template<typename T> static constexpr T numMipmapLevels(T width, T height)
 	{
 		T levels = 1;

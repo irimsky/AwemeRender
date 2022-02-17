@@ -55,7 +55,7 @@ Mesh::Mesh(const aiMesh* mesh)
 		if (mesh->HasTextureCoords(0)) {
 			vertex.texcoord = { mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y };
 		}
-        // ²»ÊÇËùÓĞÄ£ĞÍ¶¼ÓĞÇĞÏß£¬assimp»á×Ô¶¯¼ÆËã£¨aiProcess_CalcTangentSpace£©
+        // ä¸æ˜¯æ‰€æœ‰æ¨¡å‹éƒ½æœ‰åˆ‡çº¿ï¼Œassimpä¼šè‡ªåŠ¨è®¡ç®—ï¼ˆaiProcess_CalcTangentSpaceï¼‰
         //if (mesh->HasTangentsAndBitangents()) {
 		//	vertex.tangent = { mesh->mTangents[i].x, mesh->mTangents[i].y, mesh->mTangents[i].z };
 		//	vertex.bitangent = { mesh->mBitangents[i].x, mesh->mBitangents[i].y, mesh->mBitangents[i].z };
@@ -180,6 +180,7 @@ std::shared_ptr<Mesh> Mesh::fromFile(const std::string& filename)
 
 	const aiScene* scene = importer.ReadFile(filename, ImportFlags);
 	if (scene && scene->HasMeshes()) {
+        // TODO: è¿™é‡ŒåªåŠ äº†ç¬¬ä¸€ä¸ªmeshï¼Œä¸€ä¸ªæ¨¡å‹å¯èƒ½æœ‰å¤šä¸ªmesh
 		mesh = std::shared_ptr<Mesh>(new Mesh{ scene->mMeshes[0] });
 	}
 	else {

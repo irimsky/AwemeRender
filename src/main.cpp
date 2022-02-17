@@ -5,6 +5,8 @@
 #include "application.hpp"
 #include "math.hpp"
 #include "model.hpp"
+#include "global.hpp"
+#include <direct.h>
 
 //#define MY_TEST
 
@@ -30,6 +32,17 @@ int main(int argc, char* argv[])
 
 void init()
 {
+	// 获取当前工作目录（后续当前工作目录可能被更改
+	char* buffer;
+	if ((buffer = _getcwd(NULL, 0)) == NULL)
+	{
+		perror("getcwd error");
+	}
+	else
+	{
+		strcpy(PROJECT_PATH, buffer);
+	}
+
 	Application::sceneSetting.envNames = File::readAllFilesInDir(".\\data\\hdr");
 	Application::sceneSetting.envName = new char[128];
 	strcpy(Application::sceneSetting.envName, Application::sceneSetting.envNames[0]);
@@ -52,7 +65,7 @@ void init()
 	Application::sceneSetting.objectPitch = 0.0f;
 	Application::sceneSetting.objectYaw = 0.0f;
 
-	// ��������
+	// 光照设置
 	Application::sceneSetting.dirLights[0] = DirectionalLight(
 		Math::vec3(1.0f), Math::vec3(-1.0f, 0.0f, 0.0f)
 	);

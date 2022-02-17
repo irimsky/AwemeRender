@@ -3,11 +3,9 @@
 #include <stdexcept>
 #include <memory>
 
-#include <imgui_impl_opengl3.h>
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-
 #include <GLFW/glfw3.h>
+#include "global.hpp"
+#include <direct.h>
 
 
 struct TransformUB
@@ -40,7 +38,7 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, 0);
 
-	// 4.5°æ±¾OpenGL
+	// 4.5ç‰ˆæœ¬OpenGL
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 
@@ -54,24 +52,24 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 
 	GLFWwindow* window = glfwCreateWindow(width, height, "PBR", nullptr, nullptr);
 	if (!window) {
-		throw std::runtime_error("GLFW´°¿Ú´´½¨Ê§°Ü");
+		throw std::runtime_error("GLFWçª—å£åˆ›å»ºå¤±è´¥");
 	}
 
 	glfwMakeContextCurrent(window);
-	// ÉèÖÃ¼àÊÓÆ÷µÄ×îµÍË¢ĞÂÊı
+	// è®¾ç½®ç›‘è§†å™¨çš„æœ€ä½åˆ·æ–°æ•°
 	glfwSwapInterval(-1);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		throw std::runtime_error("GLAD³õÊ¼»¯Ê§°Ü");
+		throw std::runtime_error("");
 	}
-	// ×î´ó¸÷ÏòÒìĞÔ²ãÊı
+	// æœ€å¤§å„å‘å¼‚æ€§å±‚æ•°
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &m_capabilities.maxAnisotropy);
 
 #if _DEBUG
 	glDebugMessageCallback(Renderer::logMessage, nullptr);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
-	// ×î´óµÄMSAA×Ó²ÉÑùµãÊı
+	// æœ€å¤§çš„MSAAå­é‡‡æ ·ç‚¹æ•°
 	GLint maxSupportedSamples;
 	glGetIntegerv(GL_MAX_SAMPLES, &maxSupportedSamples);
 	const int samples = glm::min(maxSamples, maxSupportedSamples);
@@ -89,7 +87,15 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	// io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+	io.Fonts->AddFontDefault();
+	ImFont* font = io.Fonts->AddFontFromFileTTF(
+		"font/simhei.ttf", 17.0f, NULL,
+		io.Fonts->GetGlyphRangesChineseFull()
+	);
+	
+	IM_ASSERT(font != NULL);
+	ImGui::GetIO().FontDefault = font;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 450");
@@ -141,17 +147,19 @@ void Renderer::shutdown()
 
 void Renderer::setup(const SceneSettings& scene)
 {
-	// ¸÷ÖÖÌùÍ¼´óĞ¡
-	m_EnvMapSize = 1024;	// ±ØĞëÊÇ2µÄ´ÎÃİ
+	// å„ç§è´´å›¾å¤§å°
+	m_EnvMapSize = 1024;	// å¿…é¡»æ˜¯2çš„æ¬¡å¹‚
 	m_IrradianceMapSize = 32;
 	m_BRDF_LUT_Size = 512;
 
-	// ÉèÖÃOpenGLÈ«¾Ö×´Ì¬
+	m_selectedIdx = -1;
+
+	// è®¾ç½®OpenGLå…¨å±€çŠ¶æ€
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 	glFrontFace(GL_CCW);
 
-	// ´´½¨ÆÁÄ»VAO
+	// åˆ›å»ºå±å¹•VAO
 	float quadVertices[] = {
 		// positions   // texCoords
 		-1.0f,  1.0f,  0.0f, 1.0f,
@@ -175,38 +183,38 @@ void Renderer::setup(const SceneSettings& scene)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// ´´½¨Uniform Buffer
+	// åˆ›å»ºUniform Buffer
 	m_transformUB = createUniformBuffer<TransformUB>();
 	m_shadingUB = createUniformBuffer<ShadingUB>();
 
-	// ¼ÓÔØºó´¦Àí¡¢Ìì¿ÕºĞ¡¢pbr×ÅÉ«Æ÷
-	// TODO: recompile warning£¬¼ì²éÒ»ÏÂ
+	// åŠ è½½åå¤„ç†ã€å¤©ç©ºç›’ã€pbrç€è‰²å™¨
+	
 	m_tonemapShader = Shader("./data/shaders/postprocess_vs.glsl", "./data/shaders/postprocess_fs.glsl");
 	m_pbrShader = Shader("./data/shaders/pbr_vs.glsl", "./data/shaders/pbr_fs.glsl");
 	m_skyboxShader = Shader("./data/shaders/skybox_vs.glsl", "./data/shaders/skybox_fs.glsl");
 
-	// ¼ÓÔØprefilter¡¢ irradianceMap¡¢equirect Project¼ÆËã×ÅÉ«Æ÷
+	// åŠ è½½prefilterã€ irradianceMapã€equirect Projectè®¡ç®—ç€è‰²å™¨
 	m_prefilterShader = ComputeShader("./data/shaders/cs_prefilter.glsl");
 	m_irradianceMapShader = ComputeShader("./data/shaders/cs_irradiance_map.glsl");
 	m_equirectToCubeShader = ComputeShader("./data/shaders/cs_equirect2cube.glsl");
 
 	std::cout << "Start Loading Models:" << std::endl;
-	// ¼ÓÔØÌì¿ÕºĞÄ£ĞÍ
+	// åŠ è½½å¤©ç©ºç›’æ¨¡å‹
 	m_skybox = createMeshBuffer(Mesh::fromFile("./data/skybox.obj"));
 
-	// ¼ÓÔØPBRÄ£ĞÍÒÔ¼°ÌùÍ¼
+	// åŠ è½½PBRæ¨¡å‹ä»¥åŠè´´å›¾
 	//loadModels(scene.objName, const_cast<SceneSettings&>(scene));
 
 	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true));
 	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true));
 	m_models[1].position = Math::vec3(1.0f);
 	
-	// ¼ÓÔØ»·¾³ÌùÍ¼£¬Í¬Ê±Ô¤¼ÆËãprefilterÒÔ¼°irradiance map
-	loadSceneHdr(scene.envName);
-
-	// Ô¤¼ÆËã¸ß¹â²¿·ÖĞèÒªµÄLook Up Texture (cosTheta, roughness)
-	calcLUT();
 	
+	// é¢„è®¡ç®—é«˜å…‰éƒ¨åˆ†éœ€è¦çš„Look Up Texture (cosTheta, roughness)
+	calcLUT();
+
+	// åŠ è½½ç¯å¢ƒè´´å›¾ï¼ŒåŒæ—¶é¢„è®¡ç®—prefilterä»¥åŠirradiance map
+	loadSceneHdr(scene.envName);
 		
 	glFinish();
 }
@@ -243,33 +251,51 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	}
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
 	
-	// äÖÈ¾ÓÃµÄÖ¡»º³å£¬½ÓÏÂÀ´ËùÓĞ»æÖÆµÄ×îºó½á¹û¶¼»áÏÈ±£´æÔÚÕâ¸öframebufferÉÏ
-	// È»ºóÔÙ½«framebuffer»æÖÆµ½ÆÁÄ»ÉÏ
+	// æ¸²æŸ“ç”¨çš„å¸§ç¼“å†²ï¼Œæ¥ä¸‹æ¥æ‰€æœ‰ç»˜åˆ¶çš„æœ€åç»“æœéƒ½ä¼šå…ˆä¿å­˜åœ¨è¿™ä¸ªframebufferä¸Š
+	// ç„¶åå†å°†framebufferç»˜åˆ¶åˆ°å±å¹•ä¸Š
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer.id);
 	glClear(GL_DEPTH_BUFFER_BIT); 
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
 
-	// Ìì¿ÕºĞ
+	// å¤©ç©ºç›’
 	m_skyboxShader.use();
 	glDisable(GL_DEPTH_TEST);
 	glBindTextureUnit(0, m_envTexture.id);
 	glBindVertexArray(m_skybox.vao);
 	glDrawElements(GL_TRIANGLES, m_skybox.numElements, GL_UNSIGNED_INT, 0);
 
-	// Ä£ĞÍ
+	// æ¨¡å‹
 	m_pbrShader.use();
 	glEnable(GL_DEPTH_TEST);
-	glBindTextureUnit(4, m_envTexture.id);
-	glBindTextureUnit(5, m_irmapTexture.id);
-	glBindTextureUnit(6, m_BRDF_LUT.id);
-	for (int i = 0; i < 2; ++i) {
+
+	glBindTextureUnit(Model::TexCount, m_envTexture.id);
+	glBindTextureUnit(Model::TexCount+1, m_irmapTexture.id);
+	glBindTextureUnit(Model::TexCount+2, m_BRDF_LUT.id);
+
+	for (int i = 0; i < m_models.size(); ++i) {
 		transformUniforms.model = glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
 			glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
 			* glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
-		if (m_models[i].haveAlbedo())
+		
+		for (int j = 0; j < Model::TexCount; ++j)
+		{
+			std::string typeName = TextureTypeNames[j];
+			if (m_models[i].haveTexture((TextureType)j))
+			{
+				m_pbrShader.setBool("have"+typeName, true);
+				glBindTextureUnit(j, m_models[i].textures[j].id);
+			}
+			else
+			{
+				m_pbrShader.setBool("have" + typeName, false);
+				if (j == (int)TextureType::Albedo)
+					m_pbrShader.setVec3("commonColor", m_models[i].color.toGlmVec());
+			}
+		}
+		/*if (m_models[i].haveAlbedo())
 		{
 			m_pbrShader.setBool("haveAlbedo", true);
 			glBindTextureUnit(0, m_models[i].albedoTexture.id);
@@ -338,204 +364,27 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		else
 		{
 			m_pbrShader.setBool("haveHeight", false);
-		}
+		}*/
 
 		glBindVertexArray(m_models[i].pbrModel.vao);
 		glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
 		
 	}
-	/*transformUniforms.model = glm::translate(glm::mat4(1.0f), m_model.position.toGlmVec()) *
-		glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
-		* glm::scale(glm::mat4(1.0f), glm::vec3(m_model.scale));
-
-	if (m_model.haveAlbedo())
-	{
-		m_pbrShader.setBool("haveAlbedo", true);
-		glBindTextureUnit(0, m_albedoTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveAlbedo", false);
-		m_pbrShader.setVec3("commonColor", m_model.color.toGlmVec());
-	}
-
-	if (m_model.haveNormal())
-	{
-		m_pbrShader.setBool("haveNormal", true);
-		glBindTextureUnit(1, m_normalTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveNormal", false);
-	}
-
-	if (m_model.haveMetalness())
-	{
-		m_pbrShader.setBool("haveMetalness", true);
-		glBindTextureUnit(2, m_metalnessTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveMetalness", false);
-	}
-
-	if (m_model.haveRoughness())
-	{
-		m_pbrShader.setBool("haveRoughness", true);
-		glBindTextureUnit(3, m_roughnessTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveRoughness", false);
-	}
-
-	glBindTextureUnit(4, m_envTexture.id);
-	glBindTextureUnit(5, m_irmapTexture.id);
-	glBindTextureUnit(6, m_BRDF_LUT.id);*/
-
-	/*if (m_model.haveOcclusion())
-	{
-		m_pbrShader.setBool("haveOcclusion", true);
-		glBindTextureUnit(7, m_occlusionTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveRoughness", false);
-	}
-
-	if (m_model.haveEmmission())
-	{
-		m_pbrShader.setBool("haveEmission", true);
-		glBindTextureUnit(8, m_emissionTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveEmission", false);
-	}
-
-	if (m_model.haveHeight())
-	{
-		m_pbrShader.setBool("haveHeight", true);
-		glBindTextureUnit(9, m_heightTexture.id);
-	}
-	else
-	{
-		m_pbrShader.setBool("haveHeight", false);
-	}*/
-
-	/*glBindTextureUnit(0, m_albedoTexture.id);
-	glBindTextureUnit(1, m_normalTexture.id);
-	glBindTextureUnit(2, m_metalnessTexture.id);
-	glBindTextureUnit(3, m_roughnessTexture.id);
-	glBindTextureUnit(4, m_envTexture.id);
-	glBindTextureUnit(5, m_irmapTexture.id);
-	glBindTextureUnit(6, m_BRDF_LUT.id);
-	glBindTextureUnit(7, m_occlusionTexture.id);
-	glBindTextureUnit(8, m_emissionTexture.id);
-	glBindTextureUnit(9, m_heightTexture.id);*/
 	
-	//if (scene.objType == Mesh::ImportModel) {
-	//	glBindVertexArray(m_model.pbrModel.vao);
-	//	glDrawElements(GL_TRIANGLES, m_model.pbrModel.numElements, GL_UNSIGNED_INT, 0);
-	//	/*glBindVertexArray(m_pbrModel.vao);
-	//	glDrawElements(GL_TRIANGLES, m_pbrModel.numElements, GL_UNSIGNED_INT, 0);*/
-	//}
-	//else if (scene.objType == Mesh::Ball) {
-	//	Mesh::renderSphere();
-	//}
-	
-	// ¶àÖØ²ÉÑù
+	// å¤šé‡é‡‡æ ·
 	resolveFramebuffer(m_framebuffer, m_resolveFramebuffer);
 
-	// ½«Õû¸öframebuffer»æÖÆÔÚÆÁÄ»ÉÏ£¨ÖĞ¼äÔÚ×ÅÉ«Æ÷ÖĞ½øĞĞÒ»Ğ©ºó´¦Àí£©
-	// ½â°óÏÈÇ°µÄframebuffer£¬°ó¶¨»ØÄ¬ÈÏÆÁÄ»µÄframebuffer
+	// å°†æ•´ä¸ªframebufferç»˜åˆ¶åœ¨å±å¹•ä¸Šï¼ˆä¸­é—´åœ¨ç€è‰²å™¨ä¸­è¿›è¡Œä¸€äº›åå¤„ç†ï¼‰
+	// è§£ç»‘å…ˆå‰çš„framebufferï¼Œç»‘å®šå›é»˜è®¤å±å¹•çš„framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	m_tonemapShader.use();
 	glBindTextureUnit(0, m_resolveFramebuffer.colorTarget);
-	glBindVertexArray(m_quadVAO);	// ÆÁÄ»VAO
+	glBindVertexArray(m_quadVAO);	// å±å¹•VAO
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	// glfwSwapBuffers(window);
 }
 
-void Renderer::renderImgui(SceneSettings& scene)
-{
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui_ImplGlfw_NewFrame();
-	ImGui::NewFrame();
-	{
-		ImGui::Begin("Imgui");
-		ImGui::Text("Press [left ALT] to show mouse and control GUI");
-		ImGui::SliderFloat("Scale", &scene.objectScale, 0.01, 30.0);
-		ImGui::SliderFloat("Yaw", &scene.objectYaw, -180.0, 180.0);
-		ImGui::SliderFloat("Pitch", &scene.objectPitch, -180.0, 180.0);
-		
-		// ³¡¾°µÆ¹âÉèÖÃ
-		for (int i = 0; i < scene.NumLights; ++i)
-		{
-			std::string lightNum = "Light";
-			lightNum += '0' + char(i + 1);
-			ImGui::Checkbox(lightNum.c_str(), &scene.dirLights[i].enabled);
-			if (scene.dirLights[i].enabled) {
-				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.dirLights[i].radiance.toPtr());
-				ImGui::DragFloat3((lightNum + " Dir").c_str(), scene.dirLights[i].direction.toPtr(), 0.01f);
-			}
-		}
-
-		for (int i = 0; i < scene.NumLights; ++i)
-		{
-			std::string lightNum = "PointLight";
-			lightNum += '0' + char(i + 1);
-			ImGui::Checkbox(lightNum.c_str(), &scene.ptLights[i].enabled);
-			if (scene.ptLights[i].enabled) {
-				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.ptLights[i].radiance.toPtr());
-				ImGui::DragFloat3((lightNum + " Pos").c_str(), scene.ptLights[i].position.toPtr(), 1.0f);
-			}
-		}
-		
-		// ³¡¾°ÇĞ»»ComboBox
-		if (ImGui::BeginCombo("Scene", scene.envName)) {
-			for (int i = 0; i < scene.envNames.size(); i++)
-			{
-				bool isSelected = (scene.envName == scene.envNames[i]);
-				if (ImGui::Selectable(scene.envNames[i], isSelected)) {
-					scene.envName = scene.envNames[i];
-					if (strcmp(scene.preEnv, scene.envName))
-					{
-						loadSceneHdr(scene.envName);
-						strcpy(scene.preEnv, scene.envName);
-					}
-				}
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();  
-			}
-			ImGui::EndCombo();
-		}
-
-		// ÎïÌåÇĞ»»Combox
-		if (ImGui::BeginCombo("Object", scene.objName)) {
-			for (int i = 0; i < scene.objNames.size(); i++)
-			{
-				bool isSelected = (scene.objName == scene.objNames[i]);
-				if (ImGui::Selectable(scene.objNames[i], isSelected)) {
-					scene.objName = scene.objNames[i];
-					if (strcmp(scene.preObj, scene.objName))
-					{
-						//loadModels(scene.objName, scene);
-						strcpy(scene.preObj, scene.objName);
-					}
-				}
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-		
-		ImGui::End();
-	}
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-}
 
 GLuint Renderer::createUniformBuffer(const void* data, size_t size)
 {
@@ -556,7 +405,8 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 	deleteTexture(m_occlusionTexture);
 	deleteTexture(m_heightTexture);
 
-	std::string modelPath = "./data/models/";
+	std::string modelPath = PROJECT_PATH;
+	modelPath += "data/models/";
 	modelPath += modelName;
 
 	std::vector<char*> modelFiles = File::readAllFilesInDirWithExt(modelPath);
@@ -600,7 +450,7 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 	else
 		scene.objectScale = 1.0f;
 
-	// ¼ÓÔØÎÆÀíÌùÍ¼
+	// åŠ è½½çº¹ç†è´´å›¾
 	std::cout << "Start Loading Textures:" << std::endl;
 	m_albedoTexture = createTexture(
 		Image::fromFile(modelPath + "_albedo" + scene.texExt, 3),
@@ -675,14 +525,16 @@ void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
 
 void Renderer::loadSceneHdr(const std::string& filename)
 {
-	// ¡°ÉĞÎ´Ô¤ÂË²¨µÄ»·¾³ÌùÍ¼¡±±äÁ¿£¨Cube MapÀàĞÍ)
+	// â€œå°šæœªé¢„æ»¤æ³¢çš„ç¯å¢ƒè´´å›¾â€å˜é‡ï¼ˆCube Mapç±»å‹)
 	Texture envTextureUnfiltered = createTexture(GL_TEXTURE_CUBE_MAP, m_EnvMapSize, m_EnvMapSize, GL_RGBA16F);
 
-	std::string envFilePath = "./data/hdr/" + filename;
+	std::string envFilePath = PROJECT_PATH;
+	envFilePath += "\\data\\hdr\\" + filename;
 	envFilePath += ".hdr";
+
 	Texture envTextureEquirect = createTexture(Image::fromFile(envFilePath, 3), GL_RGB, GL_RGB16F, 1);
 
-	// equirectangular Í¶Ó°£¬½«µÃµ½µÄ½á¹ûĞ´Èë¡°ÉĞÎ´Ô¤ÂË²¨µÄ»·¾³ÌùÍ¼¡±ÖĞ
+	// equirectangular æŠ•å½±ï¼Œå°†å¾—åˆ°çš„ç»“æœå†™å…¥â€œå°šæœªé¢„æ»¤æ³¢çš„ç¯å¢ƒè´´å›¾â€ä¸­
 	m_equirectToCubeShader.use();
 	glBindTextureUnit(0, envTextureEquirect.id);
 	glBindImageTexture(1, envTextureUnfiltered.id, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
@@ -692,39 +544,39 @@ void Renderer::loadSceneHdr(const std::string& filename)
 		6
 	);
 
-	// ÒÑ¾­Í¶Ó°µ½ÁËenvTextureUnfilteredÉÏ£¬½«EquirectÌùÍ¼É¾³ı
+	// å·²ç»æŠ•å½±åˆ°äº†envTextureUnfilteredä¸Šï¼Œå°†Equirectè´´å›¾åˆ é™¤
 	deleteTexture(envTextureEquirect);
 
-	// Îª¡°ÉĞÎ´Ô¤ÂË²¨µÄ»·¾³ÌùÍ¼¡±×Ô¶¯Éú³ÉmipmapÁ´
+	// ä¸ºâ€œå°šæœªé¢„æ»¤æ³¢çš„ç¯å¢ƒè´´å›¾â€è‡ªåŠ¨ç”Ÿæˆmipmapé“¾
 	glGenerateTextureMipmap(envTextureUnfiltered.id);
 
-	// »·¾³ÌùÍ¼£¨cube mapĞÍ£©
+	// ç¯å¢ƒè´´å›¾ï¼ˆcube mapå‹ï¼‰
 	m_envTexture = createTexture(GL_TEXTURE_CUBE_MAP, m_EnvMapSize, m_EnvMapSize, GL_RGBA16F);
-	// ¸´ÖÆ¡°ÉĞÎ´Ô¤ÂË²¨µÄ»·¾³ÌùÍ¼¡±mipmapµÚ0²ã£¨Ô­Í¼£©µ½»·¾³ÌùÍ¼µÄµÚ0²ãÉÏ
+	// å¤åˆ¶â€œå°šæœªé¢„æ»¤æ³¢çš„ç¯å¢ƒè´´å›¾â€mipmapç¬¬0å±‚ï¼ˆåŸå›¾ï¼‰åˆ°ç¯å¢ƒè´´å›¾çš„ç¬¬0å±‚ä¸Š
 	glCopyImageSubData(envTextureUnfiltered.id, GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0,
 		m_envTexture.id, GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0,
 		m_envTexture.width, m_envTexture.height, 6);
 
-	// ÂË²¨»·¾³ÌùÍ¼±äÁ¿
+	// æ»¤æ³¢ç¯å¢ƒè´´å›¾å˜é‡
 	m_prefilterShader.use();
 	glBindTextureUnit(0, envTextureUnfiltered.id);
-	// ¸ù¾İ´Ö²Ú¶È²»Í¬£¬¶Ô»·¾³ÌùÍ¼½øĞĞÔ¤ÂË²¨£¨´ÓµÚ1¼¶mipmap¿ªÊ¼£¬µÚ0¼¶ÊÇÔ­Í¼£©
+	// æ ¹æ®ç²—ç³™åº¦ä¸åŒï¼Œå¯¹ç¯å¢ƒè´´å›¾è¿›è¡Œé¢„æ»¤æ³¢ï¼ˆä»ç¬¬1çº§mipmapå¼€å§‹ï¼Œç¬¬0çº§æ˜¯åŸå›¾ï¼‰
 	const float maxMipmapLevels = glm::max(float(m_envTexture.levels - 1), 1.0f);
 	int size = m_EnvMapSize / 2;
 	for (int level = 1; level <= maxMipmapLevels; ++level) {
 		const GLuint numGroups = glm::max(1, size / 32);
-		// ½«Ö¸¶¨²ã¼¶µÄÎÆÀíÌùÍ¼°ó¶¨
+		// å°†æŒ‡å®šå±‚çº§çš„çº¹ç†è´´å›¾ç»‘å®š
 		glBindImageTexture(1, m_envTexture.id, level, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA16F);
 		m_prefilterShader.setFloat("roughness", (float)level / maxMipmapLevels);
 		m_prefilterShader.compute(numGroups, numGroups, 6);
 		size /= 2;
 	}
 
-	// ÂË²¨¹ıºóµÄ»·¾³ÌùÍ¼ÒÑ¾­´æÔÚm_envTextureÀï
-	// É¾³ıµôÔ­ÓĞµÄ¡°ÉĞÎ´Ô¤ÂË²¨µÄ»·¾³ÌùÍ¼¡±
+	// æ»¤æ³¢è¿‡åçš„ç¯å¢ƒè´´å›¾å·²ç»å­˜åœ¨m_envTextureé‡Œ
+	// åˆ é™¤æ‰åŸæœ‰çš„â€œå°šæœªé¢„æ»¤æ³¢çš„ç¯å¢ƒè´´å›¾â€
 	deleteTexture(envTextureUnfiltered);
 
-	// Ô¤¼ÆËãÂş·´ÉäÓÃµÄ irradiance map.
+	// é¢„è®¡ç®—æ¼«åå°„ç”¨çš„ irradiance map.
 
 	m_irmapTexture = createTexture(GL_TEXTURE_CUBE_MAP, m_IrradianceMapSize, m_IrradianceMapSize, GL_RGBA16F, 1);
 
@@ -740,7 +592,7 @@ void Renderer::loadSceneHdr(const std::string& filename)
  
 void Renderer::calcLUT() 
 {
-	// Ô¤¼ÆËã¸ß¹â²¿·ÖĞèÒªµÄLook Up Texture (cosTheta, roughness)
+	// é¢„è®¡ç®—é«˜å…‰éƒ¨åˆ†éœ€è¦çš„Look Up Texture (cosTheta, roughness)
 	ComputeShader LUTShader = ComputeShader("data/shaders/cs_lut.glsl");
 
 	m_BRDF_LUT = createTexture(GL_TEXTURE_2D, m_BRDF_LUT_Size, m_BRDF_LUT_Size, GL_RG16F, 1);

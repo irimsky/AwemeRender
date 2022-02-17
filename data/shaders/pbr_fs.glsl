@@ -5,7 +5,7 @@ const float Epsilon = 0.00001;
 
 const int NumLights = 3;
 
-// ·Ç½ğÊôµÄF0½üËÆÎª0.4
+// éé‡‘å±çš„F0è¿‘ä¼¼ä¸º0.4
 const vec3 NonMetalF0 = vec3(0.04);
 
 struct DirectionalLight {
@@ -41,12 +41,13 @@ layout(binding=0) uniform sampler2D albedoTexture;
 layout(binding=1) uniform sampler2D normalTexture;
 layout(binding=2) uniform sampler2D metalnessTexture;
 layout(binding=3) uniform sampler2D roughnessTexture;
-layout(binding=4) uniform samplerCube specularTexture;
-layout(binding=5) uniform samplerCube irradianceTexture;
-layout(binding=6) uniform sampler2D specularBRDF_LUT;
-layout(binding=7) uniform sampler2D occlusionTexture;
-layout(binding=8) uniform sampler2D emmisiveTexture;
-layout(binding=9) uniform sampler2D heightTexture;
+layout(binding=4) uniform sampler2D occlusionTexture;
+layout(binding=5) uniform sampler2D emmisiveTexture;
+layout(binding=6) uniform sampler2D heightTexture;
+
+layout(binding=7) uniform samplerCube specularTexture;
+layout(binding=8) uniform samplerCube irradianceTexture;
+layout(binding=9) uniform sampler2D specularBRDF_LUT;
 
 uniform bool haveAlbedo;
 uniform bool haveNormal;
@@ -76,7 +77,7 @@ float gaSchlickG1(float cosTheta, float k)
 float gaSchlickGGX(float NdotL, float NdotV, float roughness)
 {
 	float r = roughness + 1.0;
-	float k = (r * r) / 8.0; // EpicÔÚÂÛÎÄÖĞ½¨ÒéÓÃÔÚÖ±½Ó¹â²¿·Ö
+	float k = (r * r) / 8.0; // Epicåœ¨è®ºæ–‡ä¸­å»ºè®®ç”¨åœ¨ç›´æ¥å…‰éƒ¨åˆ†
 	return gaSchlickG1(NdotL, k) * gaSchlickG1(NdotV, k);
 }
 
@@ -85,7 +86,7 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
-// IBLÖĞÎªÁË½«kd´Ó»ı·ÖÖĞÈ¡³öÀ´Ëù×öµÄ½üËÆ
+// IBLä¸­ä¸ºäº†å°†kdä»ç§¯åˆ†ä¸­å–å‡ºæ¥æ‰€åšçš„è¿‘ä¼¼
 vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 {
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
@@ -158,12 +159,12 @@ void main()
 
 	float NdotV = max(0.0, dot(N, V));
 
-	// ¶ÔÓÚ½ğÊôÎïÌå£¬ÆäF0ÓÃ½ğÊô¶È²åÖµÄ£Äâ
+	// å¯¹äºé‡‘å±ç‰©ä½“ï¼Œå…¶F0ç”¨é‡‘å±åº¦æ’å€¼æ¨¡æ‹Ÿ
 	vec3 F0 = mix(NonMetalF0, albedo, metalness);
 
-	// Ö±½Ó¹âÕÕ
+	// ç›´æ¥å…‰ç…§
 	vec3 directLighting = vec3(0);
-	// Æ½ĞĞ¹â
+	// å¹³è¡Œå…‰
 	for(int i=0; i<NumLights; ++i)
 	{
 		vec3 L = -dirLights[i].direction;
@@ -180,23 +181,23 @@ void main()
 
 		vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
 
-		// Âş·´Éä²¿·Ö
+		// æ¼«åå°„éƒ¨åˆ†
 		vec3 diffuseBRDF = kd * albedo;
 
-		// ¸ß¹â²¿·Ö
-		// ·ÀÖ¹³ıÒÔ0
+		// é«˜å…‰éƒ¨åˆ†
+		// é˜²æ­¢é™¤ä»¥0
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
 
 		directLighting += (diffuseBRDF + specularBRDF) * Lradiance * NdotL;
 	}
 
-	// µã¹âÔ´
+	// ç‚¹å…‰æº
 	for(int i=0; i<NumLights; ++i)
 	{
 		vec3 L = ptLights[i].position - vin.position;
 		float dis = length(L);
 		L = normalize(L);
-		// 200¾àÀë 1.0	0.022	0.0019
+		// 200è·ç¦» 1.0	0.022	0.0019
 		float attenuation = 1.0 + 0.022 * dis + 0.0019 * dis * dis;
 		vec3 Lradiance = ptLights[i].radiance;
 		vec3 H = normalize(V + L);
@@ -211,26 +212,26 @@ void main()
 
 		vec3 kd = mix(vec3(1.0) - F, vec3(0.0), metalness);
 
-		// Âş·´Éä²¿·Ö
+		// æ¼«åå°„éƒ¨åˆ†
 		vec3 diffuseBRDF = kd * albedo;
 
-		// ¸ß¹â²¿·Ö
-		// ·ÀÖ¹³ıÒÔ0
+		// é«˜å…‰éƒ¨åˆ†
+		// é˜²æ­¢é™¤ä»¥0
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
 
 		directLighting += (diffuseBRDF + specularBRDF) * Lradiance / attenuation * NdotL;
 	}
 
-	// »·¾³¹âÕÕ
+	// ç¯å¢ƒå…‰ç…§
 	vec3 ambientLighting;
 	vec3 irradiance = texture(irradianceTexture, N).rgb;
 
 	vec3 Froughness = fresnelRoughness(F0, NdotV, roughness);
 	vec3 kd = mix(vec3(1.0) - Froughness, vec3(0.0), metalness);
-	// 1/PI ÒÑ¾­ÔÚÔ¤¼ÆËãµÄ¹ı³ÌÖĞ¼ÆËã¹ıÁË
+	// 1/PI å·²ç»åœ¨é¢„è®¡ç®—çš„è¿‡ç¨‹ä¸­è®¡ç®—è¿‡äº†
 	vec3 diffuseIBL = kd * albedo * irradiance;
 
-	// ×î´óµÄMipmapµÈ¼¶
+	// æœ€å¤§çš„Mipmapç­‰çº§
 	int specularTextureMaxLevels = textureQueryLevels(specularTexture);
 
 	vec3 specularIrradiance = textureLod(specularTexture, R, roughness * specularTextureMaxLevels).rgb;
@@ -240,16 +241,16 @@ void main()
 
 	ambientLighting = diffuseIBL + specularIBL;
 	
-	// »·¾³¹âÕÚ±Î
+	// ç¯å¢ƒå…‰é®è”½
 	float AO = 1.0f;
 	if(haveOcclusion)
 		AO = texture(occlusionTexture, vin.texcoord).r;
 	
-	// ×Ô·¢¹âÏî
+	// è‡ªå‘å…‰é¡¹
 	vec3 emmision = vec3(0);
 	if(haveEmission)
 		emmision = texture(emmisiveTexture, vin.texcoord).rgb;
 
-	// ×îÖÕ½á¹û
+	// æœ€ç»ˆç»“æœ
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
 }
