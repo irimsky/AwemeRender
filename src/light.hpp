@@ -1,11 +1,14 @@
 #pragma once
 #include "math.hpp"
+#include "texture.hpp"
 using namespace Math;
 
 class Light {
 public:
 	vec3 radiance;
 	bool enabled;
+	Texture shadowMap;
+
 	Light() : radiance(vec3(1.0f)), enabled(false) {}
 };
 

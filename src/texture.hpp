@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include "utils.hpp"
 #include "image.hpp"
+#include "global.hpp"
 
 class Texture
 {
@@ -23,5 +24,7 @@ Texture createTexture(
 	const std::shared_ptr<class Image>& image, GLenum format, GLenum internalformat,
 	int levels = 0
 );
+
+Texture createShadowMap(int width, int height);
 
 void deleteTexture(Texture& texture);

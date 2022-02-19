@@ -3,12 +3,8 @@
 #include <stdexcept>
 
 #include "application.hpp"
+#include "global.hpp"
 
-const int ScreenWidth = 1700;
-const int ScreenHeight = ScreenWidth * 9 / 16;
-const int DisplaySamples = 16;
-const float MoveSpeed = 2.5;
-const float OrbitSpeed = 0.8;
 
 float Application::lastX = ScreenWidth / 2.0f;
 float Application::lastY = ScreenHeight / 2.0f;

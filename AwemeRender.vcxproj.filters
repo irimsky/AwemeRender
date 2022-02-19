@@ -87,6 +87,9 @@
     <ClCompile Include="src\global.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\shadow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.hpp">

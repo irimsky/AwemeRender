@@ -35,33 +35,18 @@ void init()
 	// 获取当前工作目录（后续当前工作目录可能被更改
 	char* buffer;
 	if ((buffer = _getcwd(NULL, 0)) == NULL)
-	{
 		perror("getcwd error");
-	}
 	else
-	{
-		strcpy(PROJECT_PATH, buffer);
-	}
+		PROJECT_PATH = buffer;
 
-	Application::sceneSetting.envNames = File::readAllFilesInDir(".\\data\\hdr");
+	Application::sceneSetting.envNames = File::readAllFilesInDir(PROJECT_PATH + "\\data\\hdr");
 	Application::sceneSetting.envName = new char[128];
 	strcpy(Application::sceneSetting.envName, Application::sceneSetting.envNames[0]);
 	Application::sceneSetting.preEnv = new char[128];
 	strcpy(Application::sceneSetting.preEnv, Application::sceneSetting.envNames[0]);
 	
-	Application::sceneSetting.objNames = File::readAllDirsInDir(".\\data\\models");
-	Application::sceneSetting.objName = new char[128];
-	strcpy(Application::sceneSetting.objName, Application::sceneSetting.objNames[0]);
-	Application::sceneSetting.preObj = new char[128];
-	strcpy(Application::sceneSetting.preObj, Application::sceneSetting.objNames[0]);
-	
-	std::string objName = Application::sceneSetting.objNames[0];
-	if(objName.substr(objName.find_last_of('_') + 1) == "ball")
-		Application::sceneSetting.objType = Mesh::Ball;	
-	else
-		Application::sceneSetting.objType = Mesh::ImportModel;
 
-	Application::sceneSetting.objectScale = 1.0f;
+
 	Application::sceneSetting.objectPitch = 0.0f;
 	Application::sceneSetting.objectYaw = 0.0f;
 

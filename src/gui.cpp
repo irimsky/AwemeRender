@@ -12,7 +12,6 @@ void Renderer::renderImgui(SceneSettings& scene)
 	{
 		ImGui::Begin("Imgui");
 		ImGui::Text("Press [left ALT] to show mouse and control GUI");
-		ImGui::SliderFloat("Scale", &scene.objectScale, 0.01, 30.0);
 		ImGui::SliderFloat("Yaw", &scene.objectYaw, -180.0, 180.0);
 		ImGui::SliderFloat("Pitch", &scene.objectPitch, -180.0, 180.0);
 
@@ -103,7 +102,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 			for (int i = 0; i < m_models.size(); ++i)
 			{
 				const bool isSelected = (i == m_selectedIdx);
-				if (ImGui::Selectable(m_models[i].name.c_str(), isSelected))
+				if (ImGui::Selectable(m_models[i].name, isSelected))
 				{
 					m_selectedIdx = i;
 				}
@@ -130,7 +129,8 @@ void Renderer::renderImgui(SceneSettings& scene)
 		if (m_selectedIdx >= 0)
 		{
 			int i = m_selectedIdx;
-			ImGui::Text(m_models[i].name.c_str());
+			ImGui::InputText("Name", m_models[i].name, 30);
+			ImGui::Text(m_models[i].name);
 			ImGui::DragFloat3(
 				"position", m_models[i].position.toPtr(), 0.01f
 			);

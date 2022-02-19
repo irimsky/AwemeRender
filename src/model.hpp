@@ -24,7 +24,7 @@ public:
 	vec3 color;
 	float scale;
 
-	std::string name;
+	char name[260];
 	bool isSelected;
 	MeshBuffer pbrModel;
 
@@ -47,9 +47,13 @@ public:
 		pbrModel = createMeshBuffer(Mesh::fromFile(filePath));
 
 		int fileIdx = filePath.find_last_of('\\');
+		if(fileIdx == -1)
+			fileIdx = filePath.find_last_of('/');
+
 		int dotIdx = filePath.find_last_of('.');
-		name = filePath.substr((size_t)fileIdx + 1, (size_t)dotIdx - fileIdx - 1);
-		name +=	std::to_string(nameCount[name]++);
+		std::string tmpName = filePath.substr((size_t)fileIdx + 1, (size_t)dotIdx - fileIdx - 1);
+		tmpName += "_" + std::to_string(nameCount[name]++);
+		strcpy(name, tmpName.c_str());
 
 		if (detectTex) {
 			
@@ -83,76 +87,6 @@ public:
 					std::cout << "No " + TextureTypeNames[i] +" Texture" << std::endl;
 				}
 			}
-			/*try {
-				albedoTexture = createTexture(
-					Image::fromFile(modelPath + "_albedo" + format, 3),
-					GL_RGB, GL_SRGB8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Albedo Texture" << std::endl;
-			}
-
-			try {
-				normalTexture = createTexture(
-					Image::fromFile(modelPath + "_normal" + format, 3),
-					GL_RGB, GL_RGB8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Normal Texture" << std::endl;
-			}
-			
-
-			try {
-				metalnessTexture = createTexture(
-					Image::fromFile(modelPath + "_metalness" + format, 1),
-					GL_RED, GL_R8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Metal Texture" << std::endl;
-			}
-
-			try {
-				roughnessTexture = createTexture(
-					Image::fromFile(modelPath + "_roughness" + format, 1),
-					GL_RED, GL_R8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Rough Texture" << std::endl;
-			}
-
-			try {
-				occlusionTexture = createTexture(
-					Image::fromFile(modelPath + "_occlusion" + format, 1),
-					GL_RED, GL_R8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Occlusion Texture" << std::endl;
-			}
-
-			try {
-				emissionTexture = createTexture(
-					Image::fromFile(modelPath + "_emission" + format, 3),
-					GL_RGB, GL_SRGB8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Emission Texture" << std::endl;
-			} 
-
-			try {
-				heightTexture = createTexture(
-					Image::fromFile(modelPath + "_height" + format, 1),
-					GL_RED, GL_R8
-				);
-			}
-			catch (std::runtime_error) {
-				std::cout << "No Height Texture" << std::endl;
-			}*/
 
 		}
 	}

@@ -74,9 +74,9 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	glGetIntegerv(GL_MAX_SAMPLES, &maxSupportedSamples);
 	const int samples = glm::min(maxSamples, maxSupportedSamples);
 
-	m_framebuffer = createFrameBuffer(width, height, samples, GL_RGBA16F, GL_DEPTH24_STENCIL8);
+	m_framebuffer = createFrameBufferWithRBO(width, height, samples, GL_RGBA16F, GL_DEPTH24_STENCIL8);
 	if (samples > 0) {
-		m_resolveFramebuffer = createFrameBuffer(width, height, 0, GL_RGBA16F, GL_NONE);
+		m_resolveFramebuffer = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
 	}
 	else {
 		m_resolveFramebuffer = m_framebuffer;
@@ -84,6 +84,7 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 
 	std::printf("OpenGL 4.5 Renderer [%s]\n", glGetString(GL_RENDERER));
 
+	// ImGui初始化
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -109,6 +110,7 @@ void Renderer::shutdown()
 		deleteFrameBuffer(m_resolveFramebuffer);
 	}
 	deleteFrameBuffer(m_framebuffer);
+	deleteFrameBuffer(m_shadowFrameBuffer);
 
 	glDeleteVertexArrays(1, &m_quadVAO);
 
@@ -188,19 +190,20 @@ void Renderer::setup(const SceneSettings& scene)
 	m_shadingUB = createUniformBuffer<ShadingUB>();
 
 	// 加载后处理、天空盒、pbr着色器
-	
-	m_tonemapShader = Shader("./data/shaders/postprocess_vs.glsl", "./data/shaders/postprocess_fs.glsl");
-	m_pbrShader = Shader("./data/shaders/pbr_vs.glsl", "./data/shaders/pbr_fs.glsl");
-	m_skyboxShader = Shader("./data/shaders/skybox_vs.glsl", "./data/shaders/skybox_fs.glsl");
+	std::string shaderPath = PROJECT_PATH + "/data/shaders";
+
+	m_tonemapShader = Shader(shaderPath + "/postprocess_vs.glsl", shaderPath + "/postprocess_fs.glsl");
+	m_pbrShader = Shader(shaderPath + "/pbr_vs.glsl", shaderPath + "/pbr_fs.glsl");
+	m_skyboxShader = Shader(shaderPath + "/skybox_vs.glsl", shaderPath + "/skybox_fs.glsl");
 
 	// 加载prefilter、 irradianceMap、equirect Project计算着色器
-	m_prefilterShader = ComputeShader("./data/shaders/cs_prefilter.glsl");
-	m_irradianceMapShader = ComputeShader("./data/shaders/cs_irradiance_map.glsl");
-	m_equirectToCubeShader = ComputeShader("./data/shaders/cs_equirect2cube.glsl");
+	m_prefilterShader = ComputeShader(shaderPath + "/cs_prefilter.glsl");
+	m_irradianceMapShader = ComputeShader(shaderPath + "/cs_irradiance_map.glsl");
+	m_equirectToCubeShader = ComputeShader(shaderPath + "/cs_equirect2cube.glsl");
 
 	std::cout << "Start Loading Models:" << std::endl;
 	// 加载天空盒模型
-	m_skybox = createMeshBuffer(Mesh::fromFile("./data/skybox.obj"));
+	m_skybox = createMeshBuffer(Mesh::fromFile(PROJECT_PATH + "/data/skybox.obj"));
 
 	// 加载PBR模型以及贴图
 	//loadModels(scene.objName, const_cast<SceneSettings&>(scene));
@@ -215,16 +218,25 @@ void Renderer::setup(const SceneSettings& scene)
 
 	// 加载环境贴图，同时预计算prefilter以及irradiance map
 	loadSceneHdr(scene.envName);
-		
+	
+	// Shadow Map初始化
+	initShadowMap(const_cast<SceneSettings&>(scene));
+
 	glFinish();
 }
 
 void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
 {
-	
+	glViewport(0, 0, ScreenWidth, ScreenHeight);
+
 	TransformUB transformUniforms;
 	transformUniforms.view = camera.GetViewMatrix();
-	transformUniforms.projection = glm::perspective(glm::radians(camera.Zoom), float(m_framebuffer.width)/float(m_framebuffer.height), 0.1f, 1000.0f);
+	transformUniforms.projection =
+		glm::perspective(
+			glm::radians(camera.Zoom),
+			float(m_framebuffer.width)/float(m_framebuffer.height),
+			Near, Far
+		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
 	ShadingUB shadingUniforms;
@@ -295,76 +307,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 					m_pbrShader.setVec3("commonColor", m_models[i].color.toGlmVec());
 			}
 		}
-		/*if (m_models[i].haveAlbedo())
-		{
-			m_pbrShader.setBool("haveAlbedo", true);
-			glBindTextureUnit(0, m_models[i].albedoTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveAlbedo", false);
-			m_pbrShader.setVec3("commonColor", m_models[i].color.toGlmVec());
-		}
-
-		if (m_models[i].haveNormal())
-		{
-			m_pbrShader.setBool("haveNormal", true);
-			glBindTextureUnit(1, m_models[i].normalTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveNormal", false);
-		}
-
-		if (m_models[i].haveMetalness())
-		{
-			m_pbrShader.setBool("haveMetalness", true);
-			glBindTextureUnit(2, m_models[i].metalnessTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveMetalness", false);
-		}
-
-		if (m_models[i].haveRoughness())
-		{
-			m_pbrShader.setBool("haveRoughness", true);
-			glBindTextureUnit(3, m_models[i].roughnessTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveRoughness", false);
-		}
-
-		if (m_models[i].haveOcclusion())
-		{
-			m_pbrShader.setBool("haveOcclusion", true);
-			glBindTextureUnit(7, m_models[i].occlusionTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveOcclusion", false);
-		}
-
-		if (m_models[i].haveEmmission())
-		{
-			m_pbrShader.setBool("haveEmission", true);
-			glBindTextureUnit(8, m_models[i].emissionTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveEmission", false);
-		}
-
-		if (m_models[i].haveHeight())
-		{
-			m_pbrShader.setBool("haveHeight", true);
-			glBindTextureUnit(9, m_models[i].heightTexture.id);
-		}
-		else
-		{
-			m_pbrShader.setBool("haveHeight", false);
-		}*/
 
 		glBindVertexArray(m_models[i].pbrModel.vao);
 		glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
@@ -394,134 +336,6 @@ GLuint Renderer::createUniformBuffer(const void* data, size_t size)
 	return ubo;
 }
 
-void Renderer::loadModels(const std::string& modelName, SceneSettings& scene)
-{
-	deleteMeshBuffer(m_pbrModel);
-	deleteTexture(m_albedoTexture);
-	deleteTexture(m_normalTexture);
-	deleteTexture(m_metalnessTexture);
-	deleteTexture(m_roughnessTexture);
-	deleteTexture(m_emissionTexture);
-	deleteTexture(m_occlusionTexture);
-	deleteTexture(m_heightTexture);
-
-	std::string modelPath = PROJECT_PATH;
-	modelPath += "data/models/";
-	modelPath += modelName;
-
-	std::vector<char*> modelFiles = File::readAllFilesInDirWithExt(modelPath);
-	bool haveMesh = false, haveTexture = false;
-	for (char* str : modelFiles)
-	{
-		std::string tmpStr = str;
-		int dotIdx = tmpStr.find_last_of('.');
-		std::string name = tmpStr.substr(0, dotIdx), 
-				    extName = tmpStr.substr(dotIdx);
-		
-		if (name == modelName)
-		{
-			scene.objExt = extName;
-			haveMesh = true;
-		}
-		else if (name.substr(0, tmpStr.find_last_of('_')) == modelName)
-		{
-			scene.texExt = extName;
-			haveTexture = true;
-		}
-	}
-
-	if (modelFiles.size() == 0 || (!haveMesh && !haveTexture))
-	{
-		throw std::runtime_error("Failed to load model files: " + modelName);
-	}
-
-	std::string name = modelName;
-	if (name.substr(name.find_last_of('_') + 1) == "ball")
-		scene.objType = Mesh::Ball;
-	else
-		scene.objType = Mesh::ImportModel;
-
-	modelPath += "/" + modelName;
-	if (scene.objType == Mesh::ImportModel)
-		m_pbrModel = createMeshBuffer(Mesh::fromFile(modelPath + scene.objExt));
-
-	if (modelName == "cerberus")
-		scene.objectScale = 2.2f;
-	else
-		scene.objectScale = 1.0f;
-
-	// 加载纹理贴图
-	std::cout << "Start Loading Textures:" << std::endl;
-	m_albedoTexture = createTexture(
-		Image::fromFile(modelPath + "_albedo" + scene.texExt, 3),
-		GL_RGB, GL_SRGB8
-	);
-	m_normalTexture = createTexture(
-		Image::fromFile(modelPath + "_normal" + scene.texExt, 3),
-		GL_RGB, GL_RGB8
-	);
-
-	m_pbrShader.use();
-	try {
-		m_metalnessTexture = createTexture(
-			Image::fromFile(modelPath + "_metalness" + scene.texExt, 1),
-			GL_RED, GL_R8
-		);
-		m_pbrShader.setBool("haveMetalness", true);
-	}
-	catch (std::runtime_error) {
-		std::cout << "No Metal Texture" << std::endl;
-		m_pbrShader.setBool("haveMetalness", false);
-	}
-
-	try {
-		m_roughnessTexture = createTexture(
-			Image::fromFile(modelPath + "_roughness" + scene.texExt, 1),
-			GL_RED, GL_R8
-		);
-		m_pbrShader.setBool("haveRoughness", true);
-	}
-	catch (std::runtime_error) {
-		std::cout << "No Rough Texture" << std::endl;
-		m_pbrShader.setBool("haveRoughness", false);
-	}
-
-	try {
-		m_occlusionTexture = createTexture(
-			Image::fromFile(modelPath + "_occlusion" + scene.texExt, 1),
-			GL_RED, GL_R8
-		);
-		m_pbrShader.setBool("haveOcclusion", true);
-	}
-	catch (std::runtime_error) {
-		std::cout << "No Occlusion Texture" << std::endl;
-		m_pbrShader.setBool("haveOcclusion", false);
-	}
-
-	try {
-		m_emissionTexture = createTexture(
-			Image::fromFile(modelPath + "_emission" + scene.texExt, 3),
-			GL_RGB, GL_SRGB8
-		);
-		m_pbrShader.setBool("haveEmission", true);
-	}
-	catch (std::runtime_error) {
-		std::cout << "No Emission Texture" << std::endl;
-		m_pbrShader.setBool("haveEmission", false);
-	} 
-
-	try {
-		m_heightTexture = createTexture(
-			Image::fromFile(modelPath + "_height" + scene.texExt, 1),
-			GL_RED, GL_R8
-		);
-		m_pbrShader.setBool("haveHeight", true);
-	}
-	catch (std::runtime_error) {
-		std::cout << "No Height Texture" << std::endl;
-		m_pbrShader.setBool("haveHeight", false);
-	}
- }
 
 void Renderer::loadSceneHdr(const std::string& filename)
 {

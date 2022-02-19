@@ -31,11 +31,9 @@ public:
 	void shutdown();
 
 private:
-
-
 	static GLuint createUniformBuffer(const void* data, size_t size);
 
-	void loadModels(const std::string& modelName, SceneSettings& scene);
+	void initShadowMap(SceneSettings& scene);
 	void loadSceneHdr(const std::string& filename);
 	void calcLUT();
 	
@@ -55,6 +53,7 @@ private:
 
 	FrameBuffer m_framebuffer;
 	FrameBuffer m_resolveFramebuffer;
+	FrameBuffer m_shadowFrameBuffer;
 
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;

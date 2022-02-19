@@ -1,4 +1,6 @@
 #include "FBO.hpp"
+
+
 #include <vector>
 #include <stdexcept>
 #include <string>
@@ -6,7 +8,8 @@
 #include <memory>
 
 
-FrameBuffer createFrameBuffer(int width, int height, int samples,
+// åˆ›å»ºç”¨RBOåšé™„ä»¶çš„FBO
+FrameBuffer createFrameBufferWithRBO(int width, int height, int samples,
 	GLenum colorFormat, GLenum depthstencilFormat
 )
 {
@@ -17,8 +20,8 @@ FrameBuffer createFrameBuffer(int width, int height, int samples,
 
 	glCreateFramebuffers(1, &fb.id);
 
-	// ÎªFramebuffer´´½¨Renderbuffer
-	// ¿ÉÓÃÓÚ·ÖÅäºÍ´æ´¢ÑÕÉ«£¬Éî¶È»òÄ£°åÖµ£¬²¢¿ÉÓÃ×÷Ö¡»º³åÇø¶ÔÏóÖĞµÄÑÕÉ«£¬Éî¶È»òÄ£°å¸½¼ş
+	// ä¸ºFramebufferåˆ›å»ºRenderbuffer
+	// å¯ç”¨äºåˆ†é…å’Œå­˜å‚¨é¢œè‰²ï¼Œæ·±åº¦æˆ–æ¨¡æ¿å€¼ï¼Œå¹¶å¯ç”¨ä½œå¸§ç¼“å†²åŒºå¯¹è±¡ä¸­çš„é¢œè‰²ï¼Œæ·±åº¦æˆ–æ¨¡æ¿é™„ä»¶
 	if (colorFormat != GL_NONE) {
 		if (samples > 0) {
 			glCreateRenderbuffers(1, &fb.colorTarget);
@@ -31,7 +34,7 @@ FrameBuffer createFrameBuffer(int width, int height, int samples,
 			glNamedFramebufferTexture(fb.id, GL_COLOR_ATTACHMENT0, fb.colorTarget, 0);
 		}
 	}
-	// ÎªRenderbufferÖ¸¶¨Éî¶È/Ä£°å¸ñÊ½
+	// ä¸ºRenderbufferæŒ‡å®šæ·±åº¦/æ¨¡æ¿æ ¼å¼
 	if (depthstencilFormat != GL_NONE) {
 		glCreateRenderbuffers(1, &fb.depthStencilTarget);
 		if (samples > 0) {
@@ -43,11 +46,36 @@ FrameBuffer createFrameBuffer(int width, int height, int samples,
 		glNamedFramebufferRenderbuffer(fb.id, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, fb.depthStencilTarget);
 	}
 
-	// ¼ì²éFramebufferÍê³É×´Ì¬
+	// æ£€æŸ¥Framebufferå®ŒæˆçŠ¶æ€
 	GLenum status = glCheckNamedFramebufferStatus(fb.id, GL_DRAW_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		throw std::runtime_error("Framebuffer´´½¨Ê§°Ü: " + std::to_string(status));
+		throw std::runtime_error("Framebufferåˆ›å»ºå¤±è´¥: " + std::to_string(status));
 	}
+	return fb;
+}
+
+// åˆ›å»ºä¸€ä¸ªç”¨äºShadowMapçš„FBO
+FrameBuffer createShadowFrameBuffer(int width, int height, Texture& shadowMap)
+{
+	FrameBuffer fb;
+	fb.width = width;
+	fb.height = height;
+	fb.samples = 0;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+	glBindTexture(GL_TEXTURE_2D, shadowMap.id);
+
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.id, 0
+	);
+	// æ˜¾å¼å‘Šè¯‰OpenGLæˆ‘ä»¬ä¸é€‚ç”¨ä»»ä½•é¢œè‰²æ•°æ®è¿›è¡Œæ¸²æŸ“
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 	return fb;
 }
 

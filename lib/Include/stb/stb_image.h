@@ -1133,7 +1133,6 @@ static FILE *stbi__fopen(char const *filename, char const *mode)
 {
    FILE *f;
 #if defined(_MSC_VER) && _MSC_VER >= 1400
-   int x = fopen_s(&f, filename, mode);
    if (0 != fopen_s(&f, filename, mode))
       f=0;
 #else

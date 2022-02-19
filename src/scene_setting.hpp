@@ -18,13 +18,12 @@ public:
 	
 	char* objName;
 	char* preObj;
-	std::vector<char*> objNames;
+	
 	Mesh::ObjectType objType;
 
 	std::string objExt;
 	std::string texExt;
 
-	float objectScale;
 	float objectYaw;
 	float objectPitch;
 };

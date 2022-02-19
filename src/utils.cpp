@@ -126,6 +126,7 @@ std::vector<char*> File::readAllFilesInDirWithExt(const std::string& path)
 
 std::string File::openFileDialog()
 {
+    // ！！！该函数会修改程序当前工作目录 ！！！
     TCHAR szBuffer[MAX_PATH] = { 0 };
     OPENFILENAME ofn;
     ZeroMemory(&ofn,sizeof(OPENFILENAME));

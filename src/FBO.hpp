@@ -1,5 +1,6 @@
 #pragma once
 #include <glad/glad.h>
+#include "texture.hpp"
 
 class FrameBuffer
 {
@@ -12,9 +13,12 @@ public:
 	int samples;
 };
 
-FrameBuffer createFrameBuffer(int width, int height, int samples,
+FrameBuffer createFrameBufferWithRBO(int width, int height, int samples,
 	GLenum colorFormat, GLenum depthstencilFormat
 );
+
+FrameBuffer createShadowFrameBuffer(int width, int height, Texture& shadowMap);
+
 
 void resolveFramebuffer(const FrameBuffer& srcfb, const FrameBuffer& dstfb);
 void deleteFrameBuffer(FrameBuffer& fb);
