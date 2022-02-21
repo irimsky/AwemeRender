@@ -6,7 +6,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 
-typedef std::shared_ptr<Mesh> MeshPtr;
+
 
 class Mesh
 {
@@ -29,7 +29,7 @@ public:
 	static_assert(sizeof(Face) == 3 * sizeof(uint32_t), "Wrong Face Size");
 
 	static std::shared_ptr<Mesh> fromFile(const std::string& filename);
-	static std::vector<MeshPtr> fromFiles(const std::string& filename);
+	static std::vector<std::shared_ptr<Mesh>> fromFiles(const std::string& filename);
 	static std::shared_ptr<Mesh> fromString(const std::string& data);
 
 	const std::vector<Vertex>& vertices() const { return m_vertices; }
@@ -53,3 +53,4 @@ private:
 	std::vector<Vertex> m_vertices;
 	std::vector<Face> m_faces;
 };
+

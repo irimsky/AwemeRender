@@ -189,7 +189,7 @@ std::shared_ptr<Mesh> Mesh::fromFile(const std::string& filename)
 	return mesh;
 }
 
-std::vector<MeshPtr> Mesh::fromFiles(const std::string& filename)
+std::vector<std::shared_ptr<Mesh>> Mesh::fromFiles(const std::string& filename)
 {
     LogStream::initialize();
 

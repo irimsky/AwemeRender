@@ -3,6 +3,7 @@
 
 #include "mesh.hpp"
 
+typedef std::shared_ptr<Mesh> MeshPtr;
 
 class MeshBuffer
 {

@@ -37,7 +37,7 @@ public:
 		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)),
 		isSelected(false), visible(true)
 	{
-		pbrModel = createMeshBuffer(Mesh::fromFile(filePath));
+		pbrModel = createMeshBuffer(Mesh::fromFiles(filePath));
 
 		int fileIdx = filePath.find_last_of('\\');
 		if(fileIdx == -1)

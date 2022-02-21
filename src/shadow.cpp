@@ -17,17 +17,12 @@ void Renderer::updateShadowMap(SceneSettings& scene)
 	glActiveTexture(GL_TEXTURE0);
 	glEnable(GL_DEPTH_TEST);
 
-	Shader dirLightShadowShader = Shader(
-			PROJECT_PATH + "/data/shaders/shadow/directionalDepth_vs.glsl",
-			PROJECT_PATH + "/data/shaders/shadow/directionalDepth_fs.glsl"
-	);
 
-	dirLightShadowShader.use();
+	m_dirLightShadowShader.use();
 	for (int i = 0; i < scene.NumLights; ++i)
 	{
-		updateDirectionalLightShadowMap(scene.dirLights[i], dirLightShadowShader);
+		updateDirectionalLightShadowMap(scene.dirLights[i], m_dirLightShadowShader);
 	}
-	dirLightShadowShader.deleteProgram();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -54,8 +49,11 @@ void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& 
 		shader.setMat4("lightSpaceMatrix", lightMatrix);
 		shader.setMat4("model", model);
 
-		glBindVertexArray(m_models[i].pbrModel.vao);
-		glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
+		for (int j = 0; j < m_models[i].pbrModel.meshes.size(); ++j)
+		{
+			glBindVertexArray(m_models[i].pbrModel.meshes[j]->vao);
+			glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
+		}
 	}
 
 }

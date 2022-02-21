@@ -190,17 +190,22 @@ void Renderer::setup(const SceneSettings& scene)
 	m_transformUB = createUniformBuffer<TransformUB>();
 	m_shadingUB = createUniformBuffer<ShadingUB>();
 
-	// 加载后处理、天空盒、pbr着色器
+	// 后处理、天空盒、pbr着色器
 	std::string shaderPath = PROJECT_PATH + "/data/shaders";
 
 	m_tonemapShader = Shader(shaderPath + "/postprocess_vs.glsl", shaderPath + "/postprocess_fs.glsl");
 	m_pbrShader = Shader(shaderPath + "/pbr_vs.glsl", shaderPath + "/pbr_fs.glsl");
 	m_skyboxShader = Shader(shaderPath + "/skybox_vs.glsl", shaderPath + "/skybox_fs.glsl");
 
-	// 加载prefilter、 irradianceMap、equirect Project计算着色器
+	// prefilter、 irradianceMap、equirect Project计算着色器
 	m_prefilterShader = ComputeShader(shaderPath + "/cs_prefilter.glsl");
 	m_irradianceMapShader = ComputeShader(shaderPath + "/cs_irradiance_map.glsl");
 	m_equirectToCubeShader = ComputeShader(shaderPath + "/cs_equirect2cube.glsl");
+
+	// Shadow Map生成着色器
+	m_dirLightShadowShader 
+		= Shader(shaderPath + "/shadow/directionalDepth_vs.glsl", shaderPath + "/shadow/directionalDepth_fs.glsl");
+
 
 	std::cout << "Start Loading Models:" << std::endl;
 	// 加载天空盒模型
@@ -310,8 +315,14 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 			}
 		}
 
-		glBindVertexArray(m_models[i].pbrModel.vao);
-		glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
+		for (int j = 0; j < m_models[i].pbrModel.meshes.size(); ++j)
+		{
+			glBindVertexArray(m_models[i].pbrModel.meshes[j]->vao);
+			glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
+		}
+
+		//glBindVertexArray(m_models[i].pbrModel.vao);
+		//glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
 		
 	}
 	

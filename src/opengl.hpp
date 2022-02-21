@@ -74,6 +74,9 @@ private:
 	ComputeShader m_prefilterShader;
 	ComputeShader m_irradianceMapShader;
 
+	Shader m_dirLightShadowShader;
+	Shader m_pointLightShadowShader;
+
 	int m_EnvMapSize;
 	int m_IrradianceMapSize;
 	int m_BRDF_LUT_Size;

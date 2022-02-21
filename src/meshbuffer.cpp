@@ -83,11 +83,11 @@ MeshBuffer createMeshBuffer(std::vector<MeshPtr>&& meshes)
 
 		glCreateVertexArrays(1, &meshes[i]->vao);
 		glVertexArrayElementBuffer(meshes[i]->vao, meshes[i]->ibo);
-		for (int i = 0; i < Mesh::NumAttributes; ++i) {
-			glVertexArrayVertexBuffer(meshes[i]->vao, i, meshes[i]->vbo, i * sizeof(glm::vec3), sizeof(Mesh::Vertex));
-			glEnableVertexArrayAttrib(meshes[i]->vao, i);
-			glVertexArrayAttribFormat(meshes[i]->vao, i, i == 2 ? 2 : 3, GL_FLOAT, GL_FALSE, 0);
-			glVertexArrayAttribBinding(meshes[i]->vao, i, i);
+		for (int j = 0; j < Mesh::NumAttributes; ++j) {
+			glVertexArrayVertexBuffer(meshes[i]->vao, j, meshes[i]->vbo, j * sizeof(glm::vec3), sizeof(Mesh::Vertex));
+			glEnableVertexArrayAttrib(meshes[i]->vao, j);
+			glVertexArrayAttribFormat(meshes[i]->vao, j, j == 2 ? 2 : 3, GL_FLOAT, GL_FALSE, 0);
+			glVertexArrayAttribBinding(meshes[i]->vao, j, j);
 		}
 	}
 
