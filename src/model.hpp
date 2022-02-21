@@ -30,10 +30,7 @@ public:
 	bool isSelected;
 	MeshBuffer pbrModel;
 
-	
-
 	static const int TexCount = 7;
-
 	Texture textures[TexCount];
 
 	Model(std::string filePath, bool detectTex=false)

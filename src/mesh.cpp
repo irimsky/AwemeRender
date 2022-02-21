@@ -41,7 +41,7 @@ struct LogStream : public Assimp::LogStream
 	}
 };
 
-Mesh::Mesh(const aiMesh* mesh)
+Mesh::Mesh(const aiMesh* mesh) : vbo(0), ibo(0), vao(0), numElements(0)
 {
 	assert(mesh->HasPositions());
 	assert(mesh->HasNormals());
@@ -187,6 +187,31 @@ std::shared_ptr<Mesh> Mesh::fromFile(const std::string& filename)
 		throw std::runtime_error("Failed to load mesh file: " + filename);
 	}
 	return mesh;
+}
+
+std::vector<MeshPtr> Mesh::fromFiles(const std::string& filename)
+{
+    LogStream::initialize();
+
+    std::cout << "Loading mesh: " << filename << std::endl;
+
+    std::shared_ptr<Mesh> mesh;
+    Assimp::Importer importer;
+
+    std::vector<std::shared_ptr<Mesh>> res;
+
+    const aiScene* scene = importer.ReadFile(filename, ImportFlags);
+    if (scene && scene->HasMeshes()) {
+        //mesh = std::shared_ptr<Mesh>(new Mesh{ scene->mMeshes[0] });
+        for (int i = 0; i < scene->mNumMeshes; ++i)
+        {
+            res.push_back(std::shared_ptr<Mesh>(new Mesh{ scene->mMeshes[i] }));
+        }
+    }
+    else {
+        throw std::runtime_error("Failed to load mesh file: " + filename);
+    }
+    return res;
 }
 
 std::shared_ptr<Mesh> Mesh::fromString(const std::string& data)
