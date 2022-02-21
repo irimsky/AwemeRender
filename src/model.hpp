@@ -2,10 +2,11 @@
 #include "texture.hpp"
 #include "math.hpp"
 #include "meshbuffer.hpp"
+#include "AABB.hpp"
 
 #include <string>
 #include <unordered_map>
-#include "../data/shaders/shadow/AABB.hpp"
+
 
 using namespace Math;
 
@@ -89,7 +90,8 @@ public:
 
 	bool haveTexture(TextureType type);
 
-	AABB getBoundingBox(glm::mat4 toWorldMatrix);
+	glm::mat4 getToWorldMatrix();
+	AABB getBoundingBox();
 
 	void loadTexture(std::string filePath, TextureType type);
 
@@ -101,3 +103,5 @@ protected:
 };
 
 void deleteModel(Model& model);
+
+void deleteModel(std::shared_ptr<Model> model);

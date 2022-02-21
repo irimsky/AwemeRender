@@ -15,8 +15,11 @@ void init();
 int main(int argc, char* argv[])
 {
 #ifdef MY_TEST
-	Model t("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj");
-	std::cout << t.name << std::endl;
+	Camera m_camera(glm::vec3(0.0f, 0.0f, 4.5f));
+	m_camera.Front = glm::vec3(1.0 / 1.414f, 0.0f, -1.0/1.414f);
+	glm::vec4 p(-5, 5, -1, 1);
+	p = m_camera.getLocalToWorldMatrix() * p;
+	std::cout << p.x << ' ' << p.y << ' ' << p.z << std::endl;
 	return 0;
 #endif
 	init();
@@ -45,8 +48,6 @@ void init()
 	Application::sceneSetting.preEnv = new char[128];
 	strcpy(Application::sceneSetting.preEnv, Application::sceneSetting.envNames[0]);
 	
-
-
 	Application::sceneSetting.objectPitch = 0.0f;
 	Application::sceneSetting.objectYaw = 0.0f;
 

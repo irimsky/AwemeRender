@@ -1,10 +1,11 @@
 #include "opengl.hpp"
+#include "global.hpp"
 
 #include <stdexcept>
 #include <memory>
 
 #include <GLFW/glfw3.h>
-#include "global.hpp"
+
 #include <direct.h>
 
 
@@ -213,11 +214,13 @@ void Renderer::setup(const SceneSettings& scene)
 	m_skybox = createMeshBuffer(Mesh::fromFile(PROJECT_PATH + "/data/skybox.obj"));
 
 	// 加载PBR模型以及贴图
-	//loadModels(scene.objName, const_cast<SceneSettings&>(scene));
-
-	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true));
-	m_models.push_back(Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true));
-	m_models[1].position = Math::vec3(1.0f);
+	m_models.push_back(
+		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true))
+	);
+	m_models.push_back(
+		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true))
+	);
+	m_models[1]->position = Math::vec3(1.0f);
 	
 	
 	// 预计算高光部分需要的Look Up Texture (cosTheta, roughness)
@@ -237,7 +240,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
 
 	TransformUB transformUniforms;
-	transformUniforms.view = camera.GetViewMatrix();
+	transformUniforms.view = camera.getViewMatrix();
 	transformUniforms.projection =
 		glm::perspective(
 			glm::radians(camera.Zoom),
@@ -294,41 +297,37 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(Model::TexCount+2, m_BRDF_LUT.id);
 
 	for (int i = 0; i < m_models.size(); ++i) {
-		if (!m_models[i].visible) continue;
+		if (!m_models[i]->visible) continue;
 		transformUniforms.model =
-			glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
+			glm::translate(glm::mat4(1.0f), m_models[i]->position.toGlmVec()) *
+			// TODO: 删去这一段测试用旋转代码
 			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
 			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
-			glm::eulerAngleXYZ(glm::radians(m_models[i].rotation.x()), glm::radians(m_models[i].rotation.y()), glm::radians(m_models[i].rotation.z())) *
-			//glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
-			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
+			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 		
 		for (int j = 0; j < Model::TexCount; ++j)
 		{
 			std::string typeName = TextureTypeNames[j];
-			if (m_models[i].haveTexture((TextureType)j))
+			if (m_models[i]->haveTexture((TextureType)j))
 			{
 				m_pbrShader.setBool("have"+typeName, true);
-				glBindTextureUnit(j, m_models[i].textures[j].id);
+				glBindTextureUnit(j, m_models[i]->textures[j].id);
 			}
 			else
 			{
 				m_pbrShader.setBool("have" + typeName, false);
 				if (j == (int)TextureType::Albedo)
-					m_pbrShader.setVec3("commonColor", m_models[i].color.toGlmVec());
+					m_pbrShader.setVec3("commonColor", m_models[i]->color.toGlmVec());
 			}
 		}
 
-		for (int j = 0; j < m_models[i].pbrModel.meshes.size(); ++j)
+		for (int j = 0; j < m_models[i]->pbrModel.meshes.size(); ++j)
 		{
-			glBindVertexArray(m_models[i].pbrModel.meshes[j]->vao);
-			glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
+			glBindVertexArray(m_models[i]->pbrModel.meshes[j]->vao);
+			glDrawElements(GL_TRIANGLES, m_models[i]->pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
 		}
-
-		//glBindVertexArray(m_models[i].pbrModel.vao);
-		//glDrawElements(GL_TRIANGLES, m_models[i].pbrModel.numElements, GL_UNSIGNED_INT, 0);
-		
 	}
 	
 	// 多重采样

@@ -24,5 +24,7 @@ private:
 	static bool firstMouse;
 	static float deltaTime;
 	static float lastFrame;
+	static float lastFrameTime;
+	static int frameCount;
 	static bool showMouse;
 };

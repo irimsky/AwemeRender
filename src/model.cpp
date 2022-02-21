@@ -2,41 +2,6 @@
 
 std::unordered_map<std::string, int> Model::nameCount;
 
-//bool Model::haveAlbedo()
-//{
-//	return albedoTexture.exist();
-//}
-//
-//bool Model::haveNormal()
-//{
-//	return normalTexture.exist();
-//}
-//
-//bool Model::haveMetalness()
-//{
-//	return metalnessTexture.exist();
-//}
-//
-//bool Model::haveRoughness()
-//{
-//	return roughnessTexture.exist();
-//}
-//
-//bool Model::haveOcclusion()
-//{
-//	return occlusionTexture.exist();
-//}
-//
-//bool Model::haveEmmission()
-//{
-//	return emissionTexture.exist();
-//}
-//
-//bool Model::haveHeight()
-//{
-//	return heightTexture.exist();
-//}
-
 bool Model::haveTexture(TextureType type)
 {
 	return textures[(int)type].exist();
@@ -75,12 +40,6 @@ bool Model::haveTexture(TextureType type)
 	//{
 	//	return haveHeight();
 	//}
-}
-
-AABB Model::getBoundingBox(glm::mat4 toWorldMatrix)
-{
-	//for(auto v: pbrModel.)
-	return AABB();
 }
 
 void Model::loadTexture(std::string filePath, TextureType type)
@@ -142,6 +101,14 @@ void Model::loadTexture(std::string filePath, TextureType type)
 	}
 }
 
+glm::mat4 Model::getToWorldMatrix()
+{
+	return glm::translate(glm::mat4(1.0f), position.toGlmVec()) *
+	glm::eulerAngleXYZ(glm::radians(rotation.x()), glm::radians(rotation.y()), glm::radians(rotation.z()))*
+	glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+}
+
+
 void deleteModel(Model& model)
 {
 	deleteMeshBuffer(model.pbrModel);
@@ -149,6 +116,15 @@ void deleteModel(Model& model)
 		deleteTexture(model.textures[i]);
 
 	std::memset(&model, 0, sizeof(Model));
+}
+
+void deleteModel(std::shared_ptr<Model> model)
+{
+	deleteMeshBuffer(model->pbrModel);
+	for (int i = 0; i < Model::TexCount; ++i)
+		deleteTexture(model->textures[i]);
+
+	model.reset();
 }
 
 

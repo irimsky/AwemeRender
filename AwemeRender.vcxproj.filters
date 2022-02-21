@@ -75,7 +75,7 @@
     <ClCompile Include="src\texture.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\FBO.cpp">
+    <ClCompile Include="src\framebuffer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\model.cpp">
@@ -93,7 +93,7 @@
     <ClCompile Include="src\shadow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="data\shaders\shadow\AABB.cpp">
+    <ClCompile Include="src\AABB.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -161,7 +161,7 @@
     <ClInclude Include="src\texture.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\FBO.hpp">
+    <ClInclude Include="src\framebuffer.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\model.hpp">
@@ -173,7 +173,7 @@
     <ClInclude Include="src\global.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="data\shaders\shadow\AABB.hpp">
+    <ClInclude Include="src\AABB.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

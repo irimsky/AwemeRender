@@ -81,10 +81,17 @@ public:
     }
 
     // returns the view matrix calculated using Euler Angles and the LookAt Matrix
-    glm::mat4 GetViewMatrix() const 
+    glm::mat4 getViewMatrix() const 
     {
         //return glm::lookAt(Position, Position + Front, Up);
         return myLookAt(Position, Front, Up); 
+    }
+
+    glm::mat4 getLocalToWorldMatrix() const
+    {
+        glm::mat4 res = myLookAt(Position, Front, Up);
+        res = glm::inverse(res);
+        return res;
     }
 
     // processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)

@@ -4,7 +4,7 @@
 #include "model.hpp"
 #include "camera.hpp"
 #include "texture.hpp"
-#include "FBO.hpp"
+#include "framebuffer.hpp"
 #include "scene_setting.hpp"
 #include "meshbuffer.hpp"
 
@@ -29,7 +29,8 @@ public:
 	void render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
 	void renderImgui(SceneSettings& scene);
 	void shutdown();
-	void updateShadowMap(SceneSettings& scene);
+	void updateShadowMap(SceneSettings& scene, const Camera& camera);
+	void updateAABB();
 
 private:
 	static GLuint createUniformBuffer(const void* data, size_t size);
@@ -61,8 +62,10 @@ private:
 
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;
-	Model m_model;
-	std::vector<Model> m_models;
+	
+	typedef std::shared_ptr<Model> ModelPtr;
+	std::vector<ModelPtr> m_models;
+
 	int m_selectedIdx;
 
 	GLuint m_quadVAO;
@@ -95,6 +98,9 @@ private:
 
 	GLuint m_transformUB;
 	GLuint m_shadingUB;
+
+	AABB m_boundingBox;
+	void updateAABB(const Camera& camera);
 };
 
 

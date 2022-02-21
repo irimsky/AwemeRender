@@ -12,6 +12,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 	{
 		ImGui::Begin("Imgui");
 		ImGui::Text("Press [left ALT] to show mouse and control GUI");
+		ImGui::Text("FPS:%.2f", scene.FPS);
 		ImGui::SliderFloat("Yaw", &scene.objectYaw, -180.0, 180.0);
 		ImGui::SliderFloat("Pitch", &scene.objectPitch, -180.0, 180.0);
 
@@ -85,7 +86,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 				try {
 					std::string file = File::openFileDialog();
 					if (file != "") {
-						m_models.push_back(Model(file, false));
+						m_models.push_back(ModelPtr((new Model(file, false))));
 						readModelMsg = "";
 					}
 				}
@@ -102,17 +103,17 @@ void Renderer::renderImgui(SceneSettings& scene)
 			for (int i = 0; i < m_models.size(); ++i)
 			{
 				const bool isSelected = (i == m_selectedIdx);
-				if (ImGui::Selectable(m_models[i].name, isSelected))
+				if (ImGui::Selectable(m_models[i]->name, isSelected))
 				{
 					m_selectedIdx = i;
 				}
 				if (isSelected) {
 					ImGui::SetItemDefaultFocus();
-					m_models[i].isSelected = true;
+					m_models[i]->isSelected = true;
 				}
 				else
 				{
-					m_models[i].isSelected = false;
+					m_models[i]->isSelected = false;
 				}
 			}
 			ImGui::ListBoxFooter();
@@ -129,16 +130,16 @@ void Renderer::renderImgui(SceneSettings& scene)
 		if (m_selectedIdx >= 0)
 		{
 			int i = m_selectedIdx;
-			ImGui::InputText("Name", m_models[i].name, 30);
-			ImGui::Text(m_models[i].name);
+			ImGui::InputText("Name", m_models[i]->name, 30);
+			ImGui::Text(m_models[i]->name);
 			ImGui::DragFloat3(
-				"position", m_models[i].position.toPtr(), 0.01f
+				"position", m_models[i]->position.toPtr(), 0.01f
 			);
 			ImGui::DragFloat3(
-				"rotate", m_models[i].rotation.toPtr(), OrbitSpeed
+				"rotate", m_models[i]->rotation.toPtr(), OrbitSpeed
 			);
-			ImGui::SliderFloat("scale", &m_models[i].scale, 0.1f, 8.0f);
-			ImGui::ColorEdit3("color", m_models[i].color.toPtr());
+			ImGui::SliderFloat("scale", &m_models[i]->scale, 0.1f, 8.0f);
+			ImGui::ColorEdit3("color", m_models[i]->color.toPtr());
 			ImGui::Separator();
 
 			// 纹理设置
@@ -158,7 +159,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 					if (file != "")
 					{
 						try {
-							m_models[i].loadTexture(file, (TextureType)j);
+							m_models[i]->loadTexture(file, (TextureType)j);
 							readTextureMsg = "";
 						}
 						catch (std::exception e)

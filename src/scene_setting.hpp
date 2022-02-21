@@ -26,4 +26,5 @@ public:
 
 	float objectYaw;
 	float objectPitch;
+	float FPS;
 };

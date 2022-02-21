@@ -12,6 +12,8 @@ bool Application::firstMouse = true;
 bool Application::showMouse = false;
 float Application::deltaTime = 0.0f;
 float Application::lastFrame = 0.0f;
+float Application::lastFrameTime = 0.0f;
+int Application::frameCount = 0;
 
 SceneSettings Application::sceneSetting;
 Camera Application::m_camera(glm::vec3(0.0f, 0.0f, 4.5f));
@@ -45,10 +47,17 @@ void Application::run(const std::unique_ptr<Renderer>& renderer)
 
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
+		++frameCount;
+		if (currentFrame - lastFrameTime >= 1.0f)
+		{
+			sceneSetting.FPS = frameCount / (currentFrame - lastFrameTime);
+			frameCount = 0;
+			lastFrameTime = currentFrame;
+		}
 		lastFrame = currentFrame;
 
 		if(!showMouse) processInput();
-		renderer->updateShadowMap(sceneSetting);
+		renderer->updateShadowMap(sceneSetting, m_camera);
 		renderer->render(m_window, m_camera, sceneSetting);
 
 		renderer->renderImgui(sceneSetting);

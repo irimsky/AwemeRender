@@ -155,7 +155,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="data\shaders\shadow\AABB.cpp" />
     <ClCompile Include="lib\Include\glad\glad.c" />
     <ClCompile Include="lib\Include\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="lib\Include\imgui\backends\imgui_impl_opengl3.cpp" />
@@ -165,8 +164,9 @@
     <ClCompile Include="lib\Include\imgui\imgui_tables.cpp" />
     <ClCompile Include="lib\Include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="lib\Include\stb\libstb.c" />
+    <ClCompile Include="src\AABB.cpp" />
     <ClCompile Include="src\application.cpp" />
-    <ClCompile Include="src\FBO.cpp" />
+    <ClCompile Include="src\framebuffer.cpp" />
     <ClCompile Include="src\global.cpp" />
     <ClCompile Include="src\image.cpp" />
     <ClCompile Include="src\gui.cpp" />
@@ -180,7 +180,6 @@
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="data\shaders\shadow\AABB.hpp" />
     <ClInclude Include="lib\Include\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="lib\Include\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="lib\Include\imgui\backends\imgui_impl_opengl3_loader.h" />
@@ -190,9 +189,10 @@
     <ClInclude Include="lib\Include\imgui\imstb_rectpack.h" />
     <ClInclude Include="lib\Include\imgui\imstb_textedit.h" />
     <ClInclude Include="lib\Include\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\AABB.hpp" />
     <ClInclude Include="src\application.hpp" />
     <ClInclude Include="src\camera.hpp" />
-    <ClInclude Include="src\FBO.hpp" />
+    <ClInclude Include="src\framebuffer.hpp" />
     <ClInclude Include="src\global.hpp" />
     <ClInclude Include="src\image.hpp" />
     <ClInclude Include="src\light.hpp" />

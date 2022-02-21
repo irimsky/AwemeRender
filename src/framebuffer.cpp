@@ -1,4 +1,4 @@
-#include "FBO.hpp"
+#include "framebuffer.hpp"
 
 
 #include <vector>
