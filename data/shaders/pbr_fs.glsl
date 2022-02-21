@@ -96,6 +96,7 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
+// 存在高度贴图时获取新的法线
 vec3 getNewNormal()
 {
 	float height = vin.height;
@@ -116,7 +117,6 @@ vec3 getNewNormal()
 
 vec3 getNormalFromMap()
 {
-
     vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
 
     vec3 Q1  = dFdx(vin.position);
@@ -135,24 +135,42 @@ vec3 getNormalFromMap()
     return normalize(TBN * tangentNormal);
 }
 
-float dirLightVisibility(DirectionalLight light, int idx)
+float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
 {
-	vec4 fragPosLightSpace = light.lightSpaceMatrix * vec4(vin.position, 1.0);
 	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-    
+	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
+    if(projCoords.z > 1.0)
+        return 1.0;
     projCoords = projCoords * 0.5 + 0.5;
 	float closestDepth;
-    if(idx == 0)
-		closestDepth = texture(dirLightShadowMap0, projCoords.xy).r; 
-    else if(idx == 1)
-		closestDepth = texture(dirLightShadowMap1, projCoords.xy).r; 
-	else if(idx == 2)
-		closestDepth = texture(dirLightShadowMap2, projCoords.xy).r; 
+    
     float currentDepth = projCoords.z;
     
-    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
-	return 1-shadow;
+	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
+	float visibility = 0;
+	for(int x = -1; x <= 1; ++x)
+	{
+		for(int y = -1; y <= 1; ++y)
+		{
+			float pcfDepth = texture(depthMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+			visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);      
+		}
+	}
+	visibility /= 9.0;
+	return visibility;
 }
+
+float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx)
+{
+	if(idx == 0) 
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap0);
+    else if(idx == 1)
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap1);
+	else if(idx == 2)
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap2);
+}
+
+
 
 void main()
 {
@@ -208,7 +226,8 @@ void main()
 		// 高光部分
 		// 防止除以0
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
-		float visibility = dirLightVisibility(dirLights[i], i);
+		vec4 fragPosLightSpace = dirLights[i].lightSpaceMatrix * vec4(vin.position, 1.0);
+		float visibility = dirLightVisibility(fragPosLightSpace, NdotL, i);
 		directLighting += ((diffuseBRDF + specularBRDF) * Lradiance * NdotL) * visibility;
 	}
 
