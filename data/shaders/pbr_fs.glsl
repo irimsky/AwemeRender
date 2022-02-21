@@ -11,6 +11,7 @@ const vec3 NonMetalF0 = vec3(0.04);
 struct DirectionalLight {
 	vec3 direction;
 	vec3 radiance;
+	mat4 lightSpaceMatrix;
 };
 
 struct PointLight {
@@ -28,7 +29,7 @@ layout(location=0) in Vertex
 } vin;
 
 layout(location=0) out vec4 color;
-
+uniform vec3 commonColor;
 
 layout(std140, binding=1) uniform ShadingUniforms
 {
@@ -49,6 +50,10 @@ layout(binding=7) uniform samplerCube specularTexture;
 layout(binding=8) uniform samplerCube irradianceTexture;
 layout(binding=9) uniform sampler2D specularBRDF_LUT;
 
+layout(binding=10) uniform sampler2D dirLightShadowMap0;
+layout(binding=11) uniform sampler2D dirLightShadowMap1;
+layout(binding=12) uniform sampler2D dirLightShadowMap2;
+
 uniform bool haveAlbedo;
 uniform bool haveNormal;
 uniform bool haveMetalness;
@@ -56,8 +61,6 @@ uniform bool haveRoughness;
 uniform bool haveOcclusion;
 uniform bool haveEmission;
 uniform bool haveHeight;
-
-uniform vec3 commonColor;
 
 float NDF_GGX(float cosLh, float roughness)
 {
@@ -132,7 +135,24 @@ vec3 getNormalFromMap()
     return normalize(TBN * tangentNormal);
 }
 
-
+float dirLightVisibility(DirectionalLight light, int idx)
+{
+	vec4 fragPosLightSpace = light.lightSpaceMatrix * vec4(vin.position, 1.0);
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    
+    projCoords = projCoords * 0.5 + 0.5;
+	float closestDepth;
+    if(idx == 0)
+		closestDepth = texture(dirLightShadowMap0, projCoords.xy).r; 
+    else if(idx == 1)
+		closestDepth = texture(dirLightShadowMap1, projCoords.xy).r; 
+	else if(idx == 2)
+		closestDepth = texture(dirLightShadowMap2, projCoords.xy).r; 
+    float currentDepth = projCoords.z;
+    
+    float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+	return 1-shadow;
+}
 
 void main()
 {
@@ -188,8 +208,8 @@ void main()
 		// 高光部分
 		// 防止除以0
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
-
-		directLighting += (diffuseBRDF + specularBRDF) * Lradiance * NdotL;
+		float visibility = dirLightVisibility(dirLights[i], i);
+		directLighting += ((diffuseBRDF + specularBRDF) * Lradiance * NdotL) * visibility;
 	}
 
 	// 点光源
@@ -254,5 +274,5 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(vec3(kd), 1.0);
+//	color = vec4(vec3(dirLightVisibility(dirLights[0], 0)), 1.0);
 }

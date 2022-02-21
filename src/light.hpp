@@ -8,6 +8,7 @@ public:
 	vec3 radiance;
 	bool enabled;
 	Texture shadowMap;
+	glm::mat4 lightSpaceMatrix;
 
 	Light() : radiance(vec3(1.0f)), enabled(false) {}
 };

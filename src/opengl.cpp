@@ -21,6 +21,7 @@ struct ShadingUB
 	struct {
 		glm::vec4 direction;
 		glm::vec4 radiance;
+		glm::mat4 lightSpaceMatrix;
 	} lights[SceneSettings::NumLights];
 	struct {
 		glm::vec4 position;
@@ -261,6 +262,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		else {
 			shadingUniforms.lights[i].radiance = glm::vec4{};
 		}
+		shadingUniforms.lights[i].lightSpaceMatrix = light.lightSpaceMatrix;
 
 		const PointLight& ptLight = scene.ptLights[i];
 		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
@@ -322,6 +324,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 					m_pbrShader.setVec3("commonColor", m_models[i]->color.toGlmVec());
 			}
 		}
+
+		for(int j=0;j<scene.NumLights;++j)
+			glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
 
 		for (int j = 0; j < m_models[i]->pbrModel.meshes.size(); ++j)
 		{

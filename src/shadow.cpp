@@ -51,6 +51,7 @@ void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& 
 		glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(0.0f), up);
 		glm::mat4 lightProjection = glm::ortho(-radius, radius, -radius, radius, 0.1f, radius * 2);
 		glm::mat4 lightMatrix = lightProjection * lightView;
+		light.lightSpaceMatrix = lightMatrix;
 		shader.setMat4("lightSpaceMatrix", lightMatrix);
 		shader.setMat4("model", model);
 
