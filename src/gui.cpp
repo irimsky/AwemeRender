@@ -134,6 +134,9 @@ void Renderer::renderImgui(SceneSettings& scene)
 			ImGui::DragFloat3(
 				"position", m_models[i].position.toPtr(), 0.01f
 			);
+			ImGui::DragFloat3(
+				"rotate", m_models[i].rotation.toPtr(), OrbitSpeed
+			);
 			ImGui::SliderFloat("scale", &m_models[i].scale, 0.1f, 8.0f);
 			ImGui::ColorEdit3("color", m_models[i].color.toPtr());
 			ImGui::Separator();

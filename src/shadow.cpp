@@ -37,9 +37,10 @@ void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& 
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i].visible) continue;
-		glm::mat4 model 
-			= glm::translate(glm::mat4(1.0), m_models[i].position.toGlmVec())
-			* glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
+		glm::mat4 model = 
+			glm::translate(glm::mat4(1.0), m_models[i].position.toGlmVec()) *
+			glm::eulerAngleXYZ(glm::radians(m_models[i].rotation.x()), glm::radians(m_models[i].rotation.y()), glm::radians(m_models[i].rotation.z())) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
 		glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 		if(lightPos.y == 10 || lightPos.y == -10)
 			up = glm::vec3(1.0f, 0.0f, 0.0f);

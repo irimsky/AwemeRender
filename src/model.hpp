@@ -23,6 +23,8 @@ class Model {
 public:
 	vec3 position;
 	vec3 color;
+	vec3 rotation;
+
 	float scale;
 	bool visible;
 
@@ -34,7 +36,7 @@ public:
 	Texture textures[TexCount];
 
 	Model(std::string filePath, bool detectTex=false)
-		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)),
+		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)), rotation(vec3(0.0f)),
 		isSelected(false), visible(true)
 	{
 		pbrModel = createMeshBuffer(Mesh::fromFiles(filePath));

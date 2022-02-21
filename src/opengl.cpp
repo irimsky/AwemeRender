@@ -295,9 +295,13 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i].visible) continue;
-		transformUniforms.model = glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
-			glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
-			* glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
+		transformUniforms.model =
+			glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
+			glm::eulerAngleXYZ(glm::radians(m_models[i].rotation.x()), glm::radians(m_models[i].rotation.y()), glm::radians(m_models[i].rotation.z())) *
+			//glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
+			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 		
 		for (int j = 0; j < Model::TexCount; ++j)
