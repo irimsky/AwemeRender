@@ -2,40 +2,40 @@
 
 std::unordered_map<std::string, int> Model::nameCount;
 
-bool Model::haveAlbedo()
-{
-	return albedoTexture.exist();
-}
-
-bool Model::haveNormal()
-{
-	return normalTexture.exist();
-}
-
-bool Model::haveMetalness()
-{
-	return metalnessTexture.exist();
-}
-
-bool Model::haveRoughness()
-{
-	return roughnessTexture.exist();
-}
-
-bool Model::haveOcclusion()
-{
-	return occlusionTexture.exist();
-}
-
-bool Model::haveEmmission()
-{
-	return emissionTexture.exist();
-}
-
-bool Model::haveHeight()
-{
-	return heightTexture.exist();
-}
+//bool Model::haveAlbedo()
+//{
+//	return albedoTexture.exist();
+//}
+//
+//bool Model::haveNormal()
+//{
+//	return normalTexture.exist();
+//}
+//
+//bool Model::haveMetalness()
+//{
+//	return metalnessTexture.exist();
+//}
+//
+//bool Model::haveRoughness()
+//{
+//	return roughnessTexture.exist();
+//}
+//
+//bool Model::haveOcclusion()
+//{
+//	return occlusionTexture.exist();
+//}
+//
+//bool Model::haveEmmission()
+//{
+//	return emissionTexture.exist();
+//}
+//
+//bool Model::haveHeight()
+//{
+//	return heightTexture.exist();
+//}
 
 bool Model::haveTexture(TextureType type)
 {
@@ -75,6 +75,12 @@ bool Model::haveTexture(TextureType type)
 	//{
 	//	return haveHeight();
 	//}
+}
+
+AABB Model::getBoundingBox(glm::mat4 toWorldMatrix)
+{
+	//for(auto v: pbrModel.)
+	return AABB();
 }
 
 void Model::loadTexture(std::string filePath, TextureType type)
@@ -141,13 +147,6 @@ void deleteModel(Model& model)
 	deleteMeshBuffer(model.pbrModel);
 	for (int i = 0; i < Model::TexCount; ++i)
 		deleteTexture(model.textures[i]);
-	/*deleteTexture(model.albedoTexture);
-	deleteTexture(model.normalTexture);
-	deleteTexture(model.metalnessTexture);
-	deleteTexture(model.roughnessTexture);
-	deleteTexture(model.emissionTexture);
-	deleteTexture(model.occlusionTexture);
-	deleteTexture(model.heightTexture);*/
 
 	std::memset(&model, 0, sizeof(Model));
 }

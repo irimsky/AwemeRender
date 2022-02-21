@@ -10,6 +10,7 @@ public:
 	MeshBuffer() : vbo(0), ibo(0), vao(0) {}
 	GLuint vbo, ibo, vao;
 	GLuint numElements;
+	std::vector<Mesh> m_s;
 
 
 };

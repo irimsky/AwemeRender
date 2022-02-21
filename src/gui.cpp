@@ -141,12 +141,13 @@ void Renderer::renderImgui(SceneSettings& scene)
 			// 纹理设置
 			ImGui::Text(readTextureMsg.c_str());
 			int frame_padding = 1;                             
-			ImVec2 size = ImVec2(50, 50);
+			ImVec2 size = ImVec2(100, 100);
 			for (int j = 0; j < Model::TexCount; ++j)
 			{
 				if (ImGui::ImageButton(
-					m_models[i].haveTexture((TextureType)j)
-					? (GLuint*)m_models[i].textures[j].id : 0,
+					/*m_models[i].haveTexture((TextureType)j)
+					? (GLuint*)m_models[i].textures[j].id : 0,*/
+					(GLuint*)scene.dirLights[j%3].shadowMap.id,
 					size
 				))
 				{

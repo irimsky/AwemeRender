@@ -48,7 +48,7 @@ void Application::run(const std::unique_ptr<Renderer>& renderer)
 		lastFrame = currentFrame;
 
 		if(!showMouse) processInput();
-		
+		renderer->updateShadowMap(sceneSetting);
 		renderer->render(m_window, m_camera, sceneSetting);
 
 		renderer->renderImgui(sceneSetting);

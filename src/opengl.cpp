@@ -81,6 +81,7 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	else {
 		m_resolveFramebuffer = m_framebuffer;
 	}
+	m_shadowFrameBuffer = createShadowFrameBuffer(ShadowMapSize, ShadowMapSize);
 
 	std::printf("OpenGL 4.5 Renderer [%s]\n", glGetString(GL_RENDERER));
 
@@ -287,6 +288,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(Model::TexCount+2, m_BRDF_LUT.id);
 
 	for (int i = 0; i < m_models.size(); ++i) {
+		if (!m_models[i].visible) continue;
 		transformUniforms.model = glm::translate(glm::mat4(1.0f), m_models[i].position.toGlmVec()) *
 			glm::eulerAngleXY(glm::radians(scene.objectPitch), glm::radians(scene.objectYaw))
 			* glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i].scale));

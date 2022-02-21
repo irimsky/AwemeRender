@@ -5,6 +5,7 @@
 
 #include <string>
 #include <unordered_map>
+#include "../data/shaders/shadow/AABB.hpp"
 
 using namespace Math;
 
@@ -23,6 +24,7 @@ public:
 	vec3 position;
 	vec3 color;
 	float scale;
+	bool visible;
 
 	char name[260];
 	bool isSelected;
@@ -31,18 +33,12 @@ public:
 	
 
 	static const int TexCount = 7;
-	Texture albedoTexture;
-	Texture normalTexture;
-	Texture metalnessTexture;
-	Texture roughnessTexture;
-	Texture occlusionTexture;
-	Texture emissionTexture;
-	Texture heightTexture;
+
 	Texture textures[TexCount];
 
 	Model(std::string filePath, bool detectTex=false)
 		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)),
-		isSelected(false)
+		isSelected(false), visible(true)
 	{
 		pbrModel = createMeshBuffer(Mesh::fromFile(filePath));
 
@@ -101,6 +97,7 @@ public:
 	bool haveHeight();
 	bool haveTexture(TextureType type);
 
+	AABB getBoundingBox(glm::mat4 toWorldMatrix);
 
 	void loadTexture(std::string filePath, TextureType type);
 

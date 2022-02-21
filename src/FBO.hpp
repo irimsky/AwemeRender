@@ -17,8 +17,8 @@ FrameBuffer createFrameBufferWithRBO(int width, int height, int samples,
 	GLenum colorFormat, GLenum depthstencilFormat
 );
 
-FrameBuffer createShadowFrameBuffer(int width, int height, Texture& shadowMap);
-
-
 void resolveFramebuffer(const FrameBuffer& srcfb, const FrameBuffer& dstfb);
 void deleteFrameBuffer(FrameBuffer& fb);
+
+FrameBuffer createShadowFrameBuffer(int width, int height);
+void attachTex2ShadowFBO(FrameBuffer& fb, Texture& shadowMap);

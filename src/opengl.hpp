@@ -29,11 +29,15 @@ public:
 	void render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
 	void renderImgui(SceneSettings& scene);
 	void shutdown();
+	void updateShadowMap(SceneSettings& scene);
 
 private:
 	static GLuint createUniformBuffer(const void* data, size_t size);
 
 	void initShadowMap(SceneSettings& scene);
+	
+	void updateDirectionalLightShadowMap(DirectionalLight& light, Shader& shader);
+
 	void loadSceneHdr(const std::string& filename);
 	void calcLUT();
 	

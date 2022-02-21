@@ -54,31 +54,6 @@ FrameBuffer createFrameBufferWithRBO(int width, int height, int samples,
 	return fb;
 }
 
-// 创建一个用于ShadowMap的FBO
-FrameBuffer createShadowFrameBuffer(int width, int height, Texture& shadowMap)
-{
-	FrameBuffer fb;
-	fb.width = width;
-	fb.height = height;
-	fb.samples = 0;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
-	glBindTexture(GL_TEXTURE_2D, shadowMap.id);
-
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.id, 0
-	);
-	// 显式告诉OpenGL我们不适用任何颜色数据进行渲染
-	glDrawBuffer(GL_NONE);
-	glReadBuffer(GL_NONE);
-
-
-	glBindTexture(GL_TEXTURE_2D, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return fb;
-}
-
 void resolveFramebuffer(const FrameBuffer& srcfb, const FrameBuffer& dstfb)
 {
 	if (srcfb.id == dstfb.id) {
@@ -121,3 +96,29 @@ void deleteFrameBuffer(FrameBuffer& fb)
 	std::memset(&fb, 0, sizeof(FrameBuffer));
 }
 
+// 创建一个用于ShadowMap的FBO
+FrameBuffer createShadowFrameBuffer(int width, int height)
+{
+	FrameBuffer fb;
+	glCreateFramebuffers(1, &fb.id);
+	fb.width = width;
+	fb.height = height;
+	fb.samples = 0;
+	return fb;
+}
+
+// 把阴影贴图附加到FBO的深度附件上
+void attachTex2ShadowFBO(FrameBuffer& fb, Texture& shadowMap)
+{
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+	glBindTexture(GL_TEXTURE_2D, shadowMap.id);
+
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowMap.id, 0
+	);
+	// 显式告诉OpenGL我们不用任何颜色数据进行渲染
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+}

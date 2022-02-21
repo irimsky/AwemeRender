@@ -22,6 +22,9 @@
     <Filter Include="shaders">
       <UniqueIdentifier>{2eb30c7a-7f43-427f-b653-8b1b3aaaf75f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\shadow">
+      <UniqueIdentifier>{c8e052ec-7f70-4461-89ac-b8ae3b7f8d86}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp">
@@ -88,6 +91,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\shadow.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="data\shaders\shadow\AABB.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -167,6 +173,9 @@
     <ClInclude Include="src\global.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="data\shaders\shadow\AABB.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="data\shaders\cs_equirect2cube.glsl">
@@ -198,6 +207,18 @@
     </None>
     <None Include="data\shaders\skybox_vs.glsl">
       <Filter>shaders</Filter>
+    </None>
+    <None Include="data\shaders\shadow\pointDepth_vs.glsl">
+      <Filter>shaders\shadow</Filter>
+    </None>
+    <None Include="data\shaders\shadow\pointDepth_fs.glsl">
+      <Filter>shaders\shadow</Filter>
+    </None>
+    <None Include="data\shaders\shadow\directionalDepth_fs.glsl">
+      <Filter>shaders\shadow</Filter>
+    </None>
+    <None Include="data\shaders\shadow\directionalDepth_vs.glsl">
+      <Filter>shaders\shadow</Filter>
     </None>
   </ItemGroup>
 </Project>
