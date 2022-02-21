@@ -45,7 +45,7 @@ public:
 
 		int dotIdx = filePath.find_last_of('.');
 		std::string tmpName = filePath.substr((size_t)fileIdx + 1, (size_t)dotIdx - fileIdx - 1);
-		tmpName += "_" + std::to_string(nameCount[name]++);
+		tmpName += "_" + std::to_string(nameCount[tmpName]++);
 		strcpy(name, tmpName.c_str());
 
 		if (detectTex) {
@@ -85,13 +85,6 @@ public:
 	}
 	Model() {};
 
-	bool haveAlbedo();
-	bool haveNormal();
-	bool haveMetalness();
-	bool haveRoughness();
-	bool haveOcclusion();
-	bool haveEmmission();
-	bool haveHeight();
 	bool haveTexture(TextureType type);
 
 	AABB getBoundingBox(glm::mat4 toWorldMatrix);
@@ -103,13 +96,6 @@ public:
 
 protected:
 	static std::unordered_map<std::string, int> nameCount;
-	/*void loadAlbedoTexture(std::string filePath);
-	void loadNormalTexture(std::string filePath);
-	void loadMetalnessTexture(std::string filePath);
-	void loadRoughnessTexture(std::string filePath);
-	void loadOcclusionTexture(std::string filePath);
-	void loadEmmissionTexture(std::string filePath);
-	void loadHeightTexture(std::string filePath);*/
 };
 
 void deleteModel(Model& model);

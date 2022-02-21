@@ -89,7 +89,8 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 // IBL中为了将kd从积分中取出来所做的近似
 vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 {
-	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+//	color = vec4(F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0), 1.0);
+	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
 }
 
 vec3 getNewNormal()
@@ -253,4 +254,5 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
+//	color = vec4(vec3(kd), 1.0);
 }

@@ -120,6 +120,7 @@ void Renderer::shutdown()
 	m_tonemapShader.deleteProgram();
 	m_prefilterShader.deleteProgram();
 	m_irradianceMapShader.deleteProgram();
+	m_dirLightShadowShader.deleteProgram();
 
 	glDeleteBuffers(1, &m_transformUB);
 	glDeleteBuffers(1, &m_shadingUB);
@@ -197,7 +198,7 @@ void Renderer::setup(const SceneSettings& scene)
 	m_pbrShader = Shader(shaderPath + "/pbr_vs.glsl", shaderPath + "/pbr_fs.glsl");
 	m_skyboxShader = Shader(shaderPath + "/skybox_vs.glsl", shaderPath + "/skybox_fs.glsl");
 
-	// prefilter、 irradianceMap、equirect Project计算着色器
+	// prefilter、 irradianceMap、equirect计算着色器
 	m_prefilterShader = ComputeShader(shaderPath + "/cs_prefilter.glsl");
 	m_irradianceMapShader = ComputeShader(shaderPath + "/cs_irradiance_map.glsl");
 	m_equirectToCubeShader = ComputeShader(shaderPath + "/cs_equirect2cube.glsl");
