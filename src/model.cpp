@@ -5,41 +5,6 @@ std::unordered_map<std::string, int> Model::nameCount;
 bool Model::haveTexture(TextureType type)
 {
 	return textures[(int)type].exist();
-
-	//if (type == TextureType::Albedo)
-	//{
-	//	return haveAlbedo();
-	//}
-
-	//else if (type == TextureType::Normal)
-	//{
-	//	return haveNormal();
-	//}
-
-	//else if (type == TextureType::Metalness)
-	//{
-	//	return haveMetalness();
-	//}
-
-	//else if (type == TextureType::Roughness)
-	//{
-	//	return haveRoughness();
-	//}
-
-	//else if (type == TextureType::Occlusion)
-	//{
-	//	return haveOcclusion();
-	//}
-
-	//else if (type == TextureType::Emission)
-	//{
-	//	return haveEmmission();
-	//}
-
-	//else if (type == TextureType::Height)
-	//{
-	//	return haveHeight();
-	//}
 }
 
 void Model::loadTexture(std::string filePath, TextureType type)
@@ -108,6 +73,61 @@ glm::mat4 Model::getToWorldMatrix()
 	glm::scale(glm::mat4(1.0f), glm::vec3(scale));
 }
 
+void Model::draw()
+{
+	for (int i = 0; i < pbrModel.meshes.size(); ++i)
+	{
+		glBindVertexArray(pbrModel.meshes[i]->vao);
+
+		if(modelType == ModelType::Sphere) 
+			glDrawElements(GL_TRIANGLE_STRIP, pbrModel.meshes[i]->numElements, GL_UNSIGNED_INT, 0);
+		else if(modelType == ModelType::Cube)
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		else if (modelType == ModelType::Plane) {
+			glDisable(GL_CULL_FACE);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			glEnable(GL_CULL_FACE);
+		}
+		else
+			glDrawElements(GL_TRIANGLES, pbrModel.meshes[i]->numElements, GL_UNSIGNED_INT, 0);
+		
+		glBindVertexArray(0);
+	}
+}
+
+
+Model* Model::createSphere()
+{
+	Model* sphere = new Model();
+	std::string tmpName = "sphere";
+	tmpName += "_" + std::to_string(nameCount[tmpName]++);
+	strcpy(sphere->name, tmpName.c_str());
+	sphere->pbrModel = createMeshBuffer(Mesh::createSphereMesh(), true);
+	sphere->modelType = Model::ModelType::Sphere;
+	return sphere;
+}
+
+Model* Model::createCube()
+{
+	Model* cube = new Model();
+	std::string tmpName = "cube";
+	tmpName += "_" + std::to_string(nameCount[tmpName]++);
+	strcpy(cube->name, tmpName.c_str());
+	cube->pbrModel = createMeshBuffer(Mesh::createCubeMesh(), true);
+	cube->modelType = Model::ModelType::Cube;
+	return cube;
+}
+
+Model* Model::createPlane()
+{
+	Model* plane = new Model();
+	std::string tmpName = "plane";
+	tmpName += "_" + std::to_string(nameCount[tmpName]++);
+	strcpy(plane->name, tmpName.c_str());
+	plane->pbrModel = createMeshBuffer(Mesh::createPlaneMesh(), true);
+	plane->modelType = Model::ModelType::Plane;
+	return plane;
+}
 
 void deleteModel(Model& model)
 {

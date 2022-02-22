@@ -212,16 +212,19 @@ void Renderer::setup(const SceneSettings& scene)
 
 	std::cout << "Start Loading Models:" << std::endl;
 	// 加载天空盒模型
-	m_skybox = createMeshBuffer(Mesh::fromFile(PROJECT_PATH + "/data/skybox.obj"));
+	m_skybox = createMeshBuffer(Mesh::fromFiles(PROJECT_PATH + "/data/skybox.obj"));
 
 	// 加载PBR模型以及贴图
-	m_models.push_back(
+	/*m_models.push_back(
 		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true))
 	);
 	m_models.push_back(
 		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true))
 	);
-	m_models[1]->position = Math::vec3(1.0f);
+	m_models[1]->position = Math::vec3(1.0f);*/
+	m_models.push_back(ModelPtr(Model::createPlane()));
+	m_models[0]->rotation = Math::vec3(-90.0f, 0, 0);
+	m_models[0]->scale = 6.0f;
 	
 	
 	// 预计算高光部分需要的Look Up Texture (cosTheta, roughness)
@@ -239,7 +242,7 @@ void Renderer::setup(const SceneSettings& scene)
 void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
 {
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
-
+	//glDisable(GL_CULL_FACE);
 	TransformUB transformUniforms;
 	transformUniforms.view = camera.getViewMatrix();
 	transformUniforms.projection =
@@ -287,8 +290,8 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	m_skyboxShader.use();
 	glDisable(GL_DEPTH_TEST);
 	glBindTextureUnit(0, m_envTexture.id);
-	glBindVertexArray(m_skybox.vao);
-	glDrawElements(GL_TRIANGLES, m_skybox.numElements, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(m_skybox.meshes[0]->vao);
+	glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
 
 	// 模型
 	m_pbrShader.use();
@@ -328,13 +331,10 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		for(int j=0;j<scene.NumLights;++j)
 			glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
 
-		for (int j = 0; j < m_models[i]->pbrModel.meshes.size(); ++j)
-		{
-			glBindVertexArray(m_models[i]->pbrModel.meshes[j]->vao);
-			glDrawElements(GL_TRIANGLES, m_models[i]->pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
-		}
+		m_models[i]->draw();
 	}
 	
+
 	// 多重采样
 	resolveFramebuffer(m_framebuffer, m_resolveFramebuffer);
 

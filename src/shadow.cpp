@@ -55,11 +55,7 @@ void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& 
 		shader.setMat4("lightSpaceMatrix", lightMatrix);
 		shader.setMat4("model", model);
 
-		for (int j = 0; j < m_models[i]->pbrModel.meshes.size(); ++j)
-		{
-			glBindVertexArray(m_models[i]->pbrModel.meshes[j]->vao);
-			glDrawElements(GL_TRIANGLES, m_models[i]->pbrModel.meshes[j]->numElements, GL_UNSIGNED_INT, 0);
-		}
+		m_models[i]->draw();
 	}
 
 }

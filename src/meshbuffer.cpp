@@ -1,25 +1,27 @@
 #include "meshbuffer.hpp"
 
-MeshBuffer createMeshBuffer(const std::shared_ptr<class Mesh>& mesh)
+MeshBuffer createMeshBuffer(const std::shared_ptr<class Mesh>& mesh, bool builded)
 {
 	MeshBuffer buffer;
-	buffer.numElements = static_cast<GLuint>(mesh->faces().size()) * 3;
+	buffer.meshes.push_back(mesh);
+	if (builded) return buffer;
 
+	buffer.meshes[0]->numElements = static_cast<GLuint>(mesh->faces().size()) * 3;
 	const size_t vertexDataSize = mesh->vertices().size() * sizeof(Mesh::Vertex);
 	const size_t indexDataSize = mesh->faces().size() * sizeof(Mesh::Face);
 
-	glCreateBuffers(1, &buffer.vbo);
-	glNamedBufferStorage(buffer.vbo, vertexDataSize, reinterpret_cast<const void*>(&mesh->vertices()[0]), 0);
-	glCreateBuffers(1, &buffer.ibo);
-	glNamedBufferStorage(buffer.ibo, indexDataSize, reinterpret_cast<const void*>(&mesh->faces()[0]), 0);
+	glCreateBuffers(1, &buffer.meshes[0]->vbo);
+	glNamedBufferStorage(buffer.meshes[0]->vbo, vertexDataSize, reinterpret_cast<const void*>(&buffer.meshes[0]->vertices()[0]), 0);
+	glCreateBuffers(1, &buffer.meshes[0]->ibo);
+	glNamedBufferStorage(buffer.meshes[0]->ibo, indexDataSize, reinterpret_cast<const void*>(&buffer.meshes[0]->faces()[0]), 0);
 
-	glCreateVertexArrays(1, &buffer.vao);
-	glVertexArrayElementBuffer(buffer.vao, buffer.ibo);
+	glCreateVertexArrays(1, &buffer.meshes[0]->vao);
+	glVertexArrayElementBuffer(buffer.meshes[0]->vao, buffer.meshes[0]->ibo);
 	for (int i = 0; i < Mesh::NumAttributes; ++i) {
-		glVertexArrayVertexBuffer(buffer.vao, i, buffer.vbo, i * sizeof(glm::vec3), sizeof(Mesh::Vertex));
-		glEnableVertexArrayAttrib(buffer.vao, i);
-		glVertexArrayAttribFormat(buffer.vao, i, i == 2 ? 2 : 3, GL_FLOAT, GL_FALSE, 0);
-		glVertexArrayAttribBinding(buffer.vao, i, i);
+		glVertexArrayVertexBuffer(buffer.meshes[0]->vao, i, buffer.meshes[0]->vbo, i * sizeof(glm::vec3), sizeof(Mesh::Vertex));
+		glEnableVertexArrayAttrib(buffer.meshes[0]->vao, i);
+		glVertexArrayAttribFormat(buffer.meshes[0]->vao, i, i == 2 ? 2 : 3, GL_FLOAT, GL_FALSE, 0);
+		glVertexArrayAttribBinding(buffer.meshes[0]->vao, i, i);
 	}
 	return buffer;
 }

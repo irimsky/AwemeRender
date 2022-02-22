@@ -4,7 +4,7 @@ layout(location=0) in vec3 position;
 layout(location=1) in vec3 normal;
 layout(location=2) in vec2 texcoord;
 
-layout(binding=9) uniform sampler2D heightTexture;
+layout(binding=6) uniform sampler2D heightTexture;
 uniform bool haveHeight;
 
 layout(std140, binding=0) uniform TransformUniforms

@@ -25,13 +25,17 @@ public:
 	vec3 position;
 	vec3 color;
 	vec3 rotation;
-
 	float scale;
 	bool visible;
 
 	char name[260];
 	bool isSelected;
+
 	MeshBuffer pbrModel;
+	enum class ModelType {
+		ImportModel,
+		Sphere, Cube, Plane
+	} modelType = Model::ModelType::ImportModel;
 
 	static const int TexCount = 7;
 	Texture textures[TexCount];
@@ -86,21 +90,27 @@ public:
 
 		}
 	}
-	Model() {};
-
-	bool haveTexture(TextureType type);
-
-	glm::mat4 getToWorldMatrix();
-	AABB getBoundingBox();
+	Model() 
+		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)), rotation(vec3(0.0f)),
+		isSelected(false), visible(true) 
+	{};
+	static Model* createSphere();
+	static Model* createCube();
+	static Model* createPlane();
 
 	void loadTexture(std::string filePath, TextureType type);
+	bool haveTexture(TextureType type);
+	glm::mat4 getToWorldMatrix();
+	void draw();
 
-	
+	AABB getBoundingBox();
 
 
 protected:
 	static std::unordered_map<std::string, int> nameCount;
 };
+
+
 
 void deleteModel(Model& model);
 

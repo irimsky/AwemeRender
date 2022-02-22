@@ -224,7 +224,7 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(vec3(dirLightVisibility(dirLights[0], 0)), 1.0);
+//	color = vec4(vec3(N), 1.0);
 }
 
 vec3 getNewNormal()
@@ -308,13 +308,13 @@ float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
 //		}
 //	}
 
-	// poison disk
+	// poisson disk
 //	for(int i=0;i<16;++i)
 //	{
 //		float pcfDepth = texture(depthMap, projCoords.xy + poissonDisk[i] * texelSize).r; 
 //		visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);
 //	}
-	// rotated poison disk
+	// rotated poisson disk
 	for(int i=0;i<16;++i)
 	{
 		float angle = 2.0 * PI * fract(sin(vin.position.x)*10000.0);

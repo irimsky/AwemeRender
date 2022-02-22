@@ -80,8 +80,8 @@ AABB Model::getBoundingBox()
 
 void Renderer::updateAABB(const Camera& camera) {
 	m_boundingBox.reset();
-	m_boundingBox.xMin = m_boundingBox.yMin = m_boundingBox.zMin = -2.0f;
-	m_boundingBox.xMax = m_boundingBox.yMax = m_boundingBox.zMax = 2.0f;
+	m_boundingBox.xMin = m_boundingBox.yMin = m_boundingBox.zMin = -6.0f;
+	m_boundingBox.xMax = m_boundingBox.yMax = m_boundingBox.zMax = 6.0f;
 	/*glm::mat4 localToWorldMatrix = camera.getLocalToWorldMatrix();
 	float T = Far * glm::tan(glm::radians(camera.Zoom) / 2);
 	float L = T * 16.0f / 9.0f;

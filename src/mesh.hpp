@@ -36,17 +36,22 @@ public:
 	const std::vector<Vertex>& vertices() const { return m_vertices; }
 	const std::vector<Face>& faces() const { return m_faces; }
 
-	static void renderSphere();
 	static unsigned int sphereVAO;
 	static unsigned int indexCount;
-	enum ObjectType {
-		ImportModel,
-		Ball
-	};
+	static std::shared_ptr<Mesh> createSphereMesh();
+
+	static unsigned int cubeVAO;
+	static unsigned int cubeVBO;
+	static std::shared_ptr<Mesh> createCubeMesh();
+	
+	static unsigned int planeVAO;
+	static unsigned int planeVBO;
+	static std::shared_ptr<Mesh> createPlaneMesh();
 
 public:
 	GLuint vbo, ibo, vao;
 	GLuint numElements;
+	Mesh() : vbo(0), ibo(0), vao(0), numElements(0){}
 
 private:
 	Mesh(const struct aiMesh* mesh);

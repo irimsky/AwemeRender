@@ -16,7 +16,7 @@ float Application::lastFrameTime = 0.0f;
 int Application::frameCount = 0;
 
 SceneSettings Application::sceneSetting;
-Camera Application::m_camera(glm::vec3(0.0f, 0.0f, 4.5f));
+Camera Application::m_camera(glm::vec3(0.0f, 2.0f, 4.5f));
 
 Application::Application()
 	: m_window(nullptr)

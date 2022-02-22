@@ -80,6 +80,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 		if (ImGui::BeginPopup("add_entity"))
 		{
 			//ImGui::ShowDemoWindow();
+			
 			// 从文件中读取模型
 			if (ImGui::Selectable("From File..."))
 			{
@@ -93,8 +94,41 @@ void Renderer::renderImgui(SceneSettings& scene)
 				catch (std::exception e) {
 					readModelMsg = "read model failed";
 				}
-
 			}
+			// 球体
+			if (ImGui::Selectable("Sphere"))
+			{
+				try {
+					m_models.push_back(ModelPtr(Model::createSphere()));
+					readModelMsg = "";
+				}
+				catch (std::exception e) {
+					readModelMsg = "read model failed";
+				}
+			}
+			// 立方体
+			if (ImGui::Selectable("Cube"))
+			{
+				try {
+					m_models.push_back(ModelPtr(Model::createCube()));
+					readModelMsg = "";
+				}
+				catch (std::exception e) {
+					readModelMsg = "read model failed";
+				}
+			}
+			// 平面
+			if (ImGui::Selectable("Plane"))
+			{
+				try {
+					m_models.push_back(ModelPtr(Model::createPlane()));
+					readModelMsg = "";
+				}
+				catch (std::exception e) {
+					readModelMsg = "read model failed";
+				}
+			}
+			
 			ImGui::EndPopup();
 		}
 
@@ -148,10 +182,11 @@ void Renderer::renderImgui(SceneSettings& scene)
 			ImVec2 size = ImVec2(100, 100);
 			for (int j = 0; j < Model::TexCount; ++j)
 			{
+				ImGui::PushID(j);
 				if (ImGui::ImageButton(
-					/*m_models[i].haveTexture((TextureType)j)
-					? (GLuint*)m_models[i].textures[j].id : 0,*/
-					(GLuint*)scene.dirLights[j%3].shadowMap.id,
+					m_models[i]->haveTexture((TextureType)j)
+					? (GLuint*)m_models[i]->textures[j].id : 0,
+					//(GLuint*)scene.dirLights[j%3].shadowMap.id,
 					size
 				))
 				{
@@ -169,6 +204,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 						
 					}
 				}
+				ImGui::PopID();
 				ImGui::SameLine();
 				auto lineHeight = 20;
 				std::string tmp = TextureTypeNames[j];

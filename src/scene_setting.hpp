@@ -15,11 +15,6 @@ public:
 	char* envName;
 	char* preEnv;
 	std::vector<char*> envNames;
-	
-	char* objName;
-	char* preObj;
-	
-	Mesh::ObjectType objType;
 
 	std::string objExt;
 	std::string texExt;
