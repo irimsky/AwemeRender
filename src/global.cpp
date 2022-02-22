@@ -11,4 +11,4 @@ const float OrbitSpeed = 0.8;
 const float Near = 0.1f;
 const float Far = 20.0f;
 
-const int ShadowMapSize = 1024;
+const int ShadowMapSize = 2048;

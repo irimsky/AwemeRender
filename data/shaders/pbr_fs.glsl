@@ -97,80 +97,11 @@ vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
 }
 
 // 存在高度贴图时获取新的法线
-vec3 getNewNormal()
-{
-	float height = vin.height;
-	float du = dFdx(height);
-	float dv = dFdy(height);
-	vec3 newNormal = vec3(-du, -dv, 1);
-	vec3 Q1  = dFdx(vin.oriPosition);
-    vec3 Q2  = dFdy(vin.oriPosition);
-    vec2 st1 = dFdx(vin.texcoord);
-    vec2 st2 = dFdy(vin.texcoord);
+vec3 getNewNormal();
+vec3 getNormalFromMap();
 
-    vec3 N  = normalize(vin.normal);
-    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-    vec3 B  = -normalize(cross(N, T));
-    mat3 TBN = mat3(T, B, N);
-	return normalize(TBN * newNormal);
-}
-
-vec3 getNormalFromMap()
-{
-    vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
-
-    vec3 Q1  = dFdx(vin.position);
-    vec3 Q2  = dFdy(vin.position);
-    vec2 st1 = dFdx(vin.texcoord);
-    vec2 st2 = dFdy(vin.texcoord);
-	
-    vec3 N  = normalize(vin.normal);
-	if(haveHeight)
-		N = getNewNormal();
-	
-    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-	
-    vec3 B  = -normalize(cross(N, T));
-    mat3 TBN = mat3(T, B, N);
-    return normalize(TBN * tangentNormal);
-}
-
-float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
-{
-	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
-    if(projCoords.z > 1.0)
-        return 1.0;
-    projCoords = projCoords * 0.5 + 0.5;
-	float closestDepth;
-    
-    float currentDepth = projCoords.z;
-    
-	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
-	float visibility = 0;
-	for(int x = -1; x <= 1; ++x)
-	{
-		for(int y = -1; y <= 1; ++y)
-		{
-			float pcfDepth = texture(depthMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-			visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);      
-		}
-	}
-	visibility /= 9.0;
-	return visibility;
-}
-
-float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx)
-{
-	if(idx == 0) 
-		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap0);
-    else if(idx == 1)
-		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap1);
-	else if(idx == 2)
-		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap2);
-}
-
-
+float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap);
+float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx);
 
 void main()
 {
@@ -294,4 +225,118 @@ void main()
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
 //	color = vec4(vec3(dirLightVisibility(dirLights[0], 0)), 1.0);
+}
+
+vec3 getNewNormal()
+{
+	float height = vin.height;
+	float du = dFdx(height);
+	float dv = dFdy(height);
+	vec3 newNormal = vec3(-du, -dv, 1);
+	vec3 Q1  = dFdx(vin.oriPosition);
+    vec3 Q2  = dFdy(vin.oriPosition);
+    vec2 st1 = dFdx(vin.texcoord);
+    vec2 st2 = dFdy(vin.texcoord);
+
+    vec3 N  = normalize(vin.normal);
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+	return normalize(TBN * newNormal);
+}
+
+vec3 getNormalFromMap()
+{
+    vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
+
+    vec3 Q1  = dFdx(vin.position);
+    vec3 Q2  = dFdy(vin.position);
+    vec2 st1 = dFdx(vin.texcoord);
+    vec2 st2 = dFdy(vin.texcoord);
+	
+    vec3 N  = normalize(vin.normal);
+	if(haveHeight)
+		N = getNewNormal();
+	
+    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
+	
+    vec3 B  = -normalize(cross(N, T));
+    mat3 TBN = mat3(T, B, N);
+    return normalize(TBN * tangentNormal);
+}
+
+
+vec2 poissonDisk[16] = {
+    vec2( -0.94201624, -0.39906216 ),
+    vec2( 0.94558609, -0.76890725 ),
+    vec2( -0.094184101, -0.92938870 ),
+    vec2( 0.34495938, 0.29387760 ),
+    vec2( -0.91588581, 0.45771432 ),
+    vec2( -0.81544232, -0.87912464 ),
+    vec2( -0.38277543, 0.27676845 ),
+    vec2( 0.97484398, 0.75648379 ),
+    vec2( 0.44323325, -0.97511554 ),
+    vec2( 0.53742981, -0.47373420 ),
+    vec2( -0.26496911, -0.41893023 ),
+    vec2( 0.79197514, 0.19090188 ),
+    vec2( -0.24188840, 0.99706507 ),
+    vec2( -0.81409955, 0.91437590 ),
+    vec2( 0.19984126, 0.78641367 ),
+    vec2( 0.14383161, -0.14100790 )
+};
+
+float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
+{
+	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+	vec2 texelSize = 1.0 / textureSize(depthMap, 0);
+    if(projCoords.z > 1.0)
+        return 1.0;
+    projCoords = projCoords * 0.5 + 0.5;
+	float closestDepth;
+    
+    float currentDepth = projCoords.z;
+    
+	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
+	float visibility = 0;
+	// 3*3模板
+//	for(int x = -1; x <= 1; ++x)
+//	{
+//		for(int y = -1; y <= 1; ++y)
+//		{
+//			float pcfDepth = texture(depthMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+//			visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);      
+//		}
+//	}
+
+	// poison disk
+//	for(int i=0;i<16;++i)
+//	{
+//		float pcfDepth = texture(depthMap, projCoords.xy + poissonDisk[i] * texelSize).r; 
+//		visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);
+//	}
+	// rotated poison disk
+	for(int i=0;i<16;++i)
+	{
+		float angle = 2.0 * PI * fract(sin(vin.position.x)*10000.0);
+		float s = sin(angle);
+        float c = cos(angle);
+		vec2 randOffset = vec2(
+			poissonDisk[i].x * c + poissonDisk[i].y * s,
+			poissonDisk[i].x * (-s) + poissonDisk[i].y * c
+		);
+		float pcfDepth = texture(depthMap, projCoords.xy + randOffset * texelSize).r; 
+		visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);
+	}
+	visibility /= 16.0;
+	return visibility;
+}
+
+float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx)
+{
+	if(idx == 0) 
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap0);
+    else if(idx == 1)
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap1);
+	else if(idx == 2)
+		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap2);
 }
