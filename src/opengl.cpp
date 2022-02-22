@@ -96,7 +96,10 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 		"font/simhei.ttf", 17.0f, NULL,
 		io.Fonts->GetGlyphRangesChineseFull()
 	);
-	
+	//std::string iniPath = PROJECT_PATH + "/data/imgui.ini";
+	//io.IniFilename = iniPath.c_str();
+	//ImGui::LoadIniSettingsFromDisk(iniPath.c_str());
+
 	IM_ASSERT(font != NULL);
 	ImGui::GetIO().FontDefault = font;
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
