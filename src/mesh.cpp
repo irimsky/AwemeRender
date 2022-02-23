@@ -102,6 +102,7 @@ std::vector<std::shared_ptr<Mesh>> Mesh::fromFiles(const std::string& filename)
     std::vector<std::shared_ptr<Mesh>> res;
 
     const aiScene* scene = importer.ReadFile(filename, ImportFlags);
+    
     if (scene && scene->HasMeshes()) {
         //mesh = std::shared_ptr<Mesh>(new Mesh{ scene->mMeshes[0] });
         for (int i = 0; i < scene->mNumMeshes; ++i)

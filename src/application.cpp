@@ -92,13 +92,18 @@ void Application::mousePositionCallback(GLFWwindow* window, double xpos, double 
 
 void Application::mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	if (showMouse) return;
+	if (showMouse)
+	{
+		ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
+		return;
+	}
 	m_camera.ProcessMouseScroll(yoffset);
 }
 
 void Application::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
+	if(showMouse)
+		ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
 	if (action == GLFW_PRESS) {
 
 		DirectionalLight* light = nullptr;

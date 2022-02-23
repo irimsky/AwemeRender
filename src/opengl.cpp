@@ -142,13 +142,6 @@ void Renderer::shutdown()
 	deleteTexture(m_irmapTexture);
 	deleteTexture(m_BRDF_LUT);
 
-	/*deleteTexture(m_albedoTexture);
-	deleteTexture(m_normalTexture);
-	deleteTexture(m_metalnessTexture);
-	deleteTexture(m_roughnessTexture);
-	deleteTexture(m_emissionTexture);
-	deleteTexture(m_occlusionTexture);*/
-
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
