@@ -33,6 +33,7 @@ void Renderer::updateShadowMap(SceneSettings& scene, const Camera& camera)
 	glCullFace(GL_BACK);
 }
 
+
 void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& shader) {
 	attachTex2ShadowFBO(m_shadowFrameBuffer, light.shadowMap);
 	glClear(GL_DEPTH_BUFFER_BIT);

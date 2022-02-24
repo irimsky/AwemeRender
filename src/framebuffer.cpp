@@ -122,3 +122,51 @@ void attachTex2ShadowFBO(FrameBuffer& fb, Texture& shadowMap)
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+GBuffer createGBuffer(int width, int height)
+{
+	GBuffer fb;
+	glCreateFramebuffers(1, &fb.id);
+	fb.width = width;
+	fb.height = height;
+	fb.samples = 0;
+	glBindFramebuffer(GL_FRAMEBUFFER, fb.id);
+
+	glGenTextures(1, &fb.positionTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.positionTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, fb.positionTarget, 0);
+
+	glGenTextures(1, &fb.normalTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.normalTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.normalTarget, 0);
+
+	glGenTextures(1, &fb.colorTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.colorTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.colorTarget, 0);
+
+	glGenTextures(1, &fb.rmoTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.rmoTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.rmoTarget, 0);
+
+	glGenTextures(1, &fb.emissionTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.emissionTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.emissionTarget, 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return fb;
+}

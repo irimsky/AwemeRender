@@ -30,7 +30,6 @@ public:
 	void renderImgui(SceneSettings& scene);
 	void shutdown();
 	void updateShadowMap(SceneSettings& scene, const Camera& camera);
-	void updateAABB();
 
 private:
 	static GLuint createUniformBuffer(const void* data, size_t size);
@@ -42,6 +41,7 @@ private:
 	void loadSceneHdr(const std::string& filename);
 	void calcLUT();
 	
+	void updateAABB(const Camera& camera);
 
 	template<typename T> GLuint createUniformBuffer(const T* data = nullptr)
 	{
@@ -59,9 +59,13 @@ private:
 	FrameBuffer m_framebuffer;
 	FrameBuffer m_resolveFramebuffer;
 	FrameBuffer m_shadowFrameBuffer;
+	// position, normal, albedo, (roughness, metalness, occlusion), emmision
+	GBuffer m_gbuffer;
 
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;
+	
+	
 	
 	typedef std::shared_ptr<Model> ModelPtr;
 	std::vector<ModelPtr> m_models;
@@ -100,7 +104,7 @@ private:
 	GLuint m_shadingUB;
 
 	AABB m_boundingBox;
-	void updateAABB(const Camera& camera);
+	
 };
 
 

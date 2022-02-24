@@ -22,3 +22,15 @@ void deleteFrameBuffer(FrameBuffer& fb);
 
 FrameBuffer createShadowFrameBuffer(int width, int height);
 void attachTex2ShadowFBO(FrameBuffer& fb, Texture& shadowMap);
+
+class GBuffer : public FrameBuffer
+{
+public:
+	GLuint positionTarget, normalTarget, 
+		   rmoTarget,	// rough,metal,occlusion 三合一
+		   emissionTarget;
+
+
+};
+
+GBuffer createGBuffer(int width, int height);
