@@ -283,19 +283,34 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
 
 	// 天空盒
-	m_skyboxShader.use();
-	glDisable(GL_DEPTH_TEST);
-	glBindTextureUnit(0, m_envTexture.id);
-	glBindVertexArray(m_skybox.meshes[0]->vao);
-	glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
-
+	if (scene.skybox) {
+		m_skyboxShader.use();
+		glDisable(GL_DEPTH_TEST);
+		glBindTextureUnit(0, m_envTexture.id);
+		glBindVertexArray(m_skybox.meshes[0]->vao);
+		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
+	}
+	else
+	{
+		glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+	
+	
 	// 模型
 	m_pbrShader.use();
+	m_pbrShader.setBool("haveSkybox", scene.skybox);
+	if (!scene.skybox)
+	{
+		m_pbrShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
+	}
+	else
+	{
+		glBindTextureUnit(Model::TexCount, m_envTexture.id);
+		glBindTextureUnit(Model::TexCount + 1, m_irmapTexture.id);
+	}
+	glBindTextureUnit(Model::TexCount + 2, m_BRDF_LUT.id);
 	glEnable(GL_DEPTH_TEST);
-
-	glBindTextureUnit(Model::TexCount, m_envTexture.id);
-	glBindTextureUnit(Model::TexCount+1, m_irmapTexture.id);
-	glBindTextureUnit(Model::TexCount+2, m_BRDF_LUT.id);
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i]->visible) continue;

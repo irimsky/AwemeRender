@@ -12,6 +12,8 @@ public:
 	DirectionalLight dirLights[NumLights];
 	PointLight ptLights[NumLights];
 
+	bool skybox = true;
+	vec3 backgroundColor = vec3(0.1f);
 	char* envName;
 	char* preEnv;
 	std::vector<char*> envNames;

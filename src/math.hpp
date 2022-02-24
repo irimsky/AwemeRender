@@ -31,9 +31,9 @@ namespace Math {
 			data.assign(v.data.begin(), v.data.end());
 		}
 
-		float x() { return data[0]; }
-		float y() { return data[1]; }
-		float z() { return data[2]; }
+		float x() const { return data[0]; }
+		float y() const { return data[1]; }
+		float z() const { return data[2]; }
 
 		float* toPtr() {
 			return data.data();

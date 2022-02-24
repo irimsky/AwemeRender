@@ -16,26 +16,32 @@ void Renderer::renderImgui(SceneSettings& scene)
 		ImGui::SliderFloat("Yaw", &scene.objectYaw, -180.0, 180.0);
 		ImGui::SliderFloat("Pitch", &scene.objectPitch, -180.0, 180.0);
 
-
-
-		// 场景切换ComboBox
-		if (ImGui::BeginCombo("Scene", scene.envName)) {
-			for (int i = 0; i < scene.envNames.size(); i++)
-			{
-				const bool isSelected = (scene.envName == scene.envNames[i]);
-				if (ImGui::Selectable(scene.envNames[i], isSelected)) {
-					scene.envName = scene.envNames[i];
-					if (strcmp(scene.preEnv, scene.envName))
-					{
-						loadSceneHdr(scene.envName);
-						strcpy(scene.preEnv, scene.envName);
+		ImGui::Checkbox("skybox", &scene.skybox);
+		if (scene.skybox) {
+			// 场景切换ComboBox
+			if (ImGui::BeginCombo("Scene", scene.envName)) {
+				for (int i = 0; i < scene.envNames.size(); i++)
+				{
+					const bool isSelected = (scene.envName == scene.envNames[i]);
+					if (ImGui::Selectable(scene.envNames[i], isSelected)) {
+						scene.envName = scene.envNames[i];
+						if (strcmp(scene.preEnv, scene.envName))
+						{
+							loadSceneHdr(scene.envName);
+							strcpy(scene.preEnv, scene.envName);
+						}
 					}
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
 				}
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
+				ImGui::EndCombo();
 			}
-			ImGui::EndCombo();
 		}
+		else
+		{
+			ImGui::ColorEdit3("ambient light", scene.backgroundColor.toPtr());
+		}
+		
 
 		ImGui::End();
 	}

@@ -62,6 +62,9 @@ uniform bool haveOcclusion;
 uniform bool haveEmission;
 uniform bool haveHeight;
 
+uniform bool haveSkybox;
+uniform vec3 backgroundColor;
+
 float NDF_GGX(float cosLh, float roughness)
 {
 	float alpha   = roughness * roughness;
@@ -195,8 +198,9 @@ void main()
 
 	// 环境光照
 	vec3 ambientLighting;
-	vec3 irradiance = texture(irradianceTexture, N).rgb;
-
+	vec3 irradiance = backgroundColor;
+	if(haveSkybox)
+		irradiance = texture(irradianceTexture, N).rgb;	
 	vec3 Froughness = fresnelRoughness(F0, NdotV, roughness);
 	vec3 kd = mix(vec3(1.0) - Froughness, vec3(0.0), metalness);
 	// 1/PI 已经在预计算的过程中计算过了
@@ -204,14 +208,17 @@ void main()
 
 	// 最大的Mipmap等级
 	int specularTextureMaxLevels = textureQueryLevels(specularTexture);
-
-	vec3 specularIrradiance = textureLod(specularTexture, R, roughness * specularTextureMaxLevels).rgb;
+	
+	vec3 specularIrradiance = backgroundColor;
+	if(haveSkybox)
+		specularIrradiance = textureLod(specularTexture, R, roughness * specularTextureMaxLevels).rgb;
 	vec2 specularBRDF = texture(specularBRDF_LUT, vec2(NdotV, roughness)).rg;
 
 	vec3 specularIBL = (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
 
 	ambientLighting = diffuseIBL + specularIBL;
-	
+ 
+
 	// 环境光遮蔽
 	float AO = 1.0f;
 	if(haveOcclusion)
