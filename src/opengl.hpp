@@ -27,6 +27,7 @@ public:
 	GLFWwindow* initialize(int width, int height, int maxSamples) ;
 	void setup(const SceneSettings& scene) ;
 	void render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
+	void deferredRender(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
 	void renderImgui(SceneSettings& scene);
 	void shutdown();
 	void updateShadowMap(SceneSettings& scene, const Camera& camera);
@@ -57,10 +58,11 @@ private:
 	} m_capabilities;
 
 	FrameBuffer m_framebuffer;
-	FrameBuffer m_resolveFramebuffer;
+	FrameBuffer m_interFramebuffer;
 	FrameBuffer m_shadowFrameBuffer;
 	// position, normal, albedo, (roughness, metalness, occlusion), emmision
 	GBuffer m_gbuffer;
+	
 
 	MeshBuffer m_skybox;
 	MeshBuffer m_pbrModel;
@@ -83,6 +85,9 @@ private:
 
 	Shader m_dirLightShadowShader;
 	Shader m_pointLightShadowShader;
+
+	Shader m_geometryPassShader;
+	Shader m_lightPassShader;
 
 	int m_EnvMapSize;
 	int m_IrradianceMapSize;

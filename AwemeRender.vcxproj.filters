@@ -25,6 +25,9 @@
     <Filter Include="shaders\shadow">
       <UniqueIdentifier>{c8e052ec-7f70-4461-89ac-b8ae3b7f8d86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\deferred">
+      <UniqueIdentifier>{ebdf5126-9343-4171-a8b7-2c94c54488de}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp">
@@ -219,6 +222,18 @@
     </None>
     <None Include="data\shaders\shadow\directionalDepth_vs.glsl">
       <Filter>shaders\shadow</Filter>
+    </None>
+    <None Include="data\shaders\deferred\deferred_geo_fs.glsl">
+      <Filter>shaders\deferred</Filter>
+    </None>
+    <None Include="data\shaders\deferred\deferred_geo_vs.glsl">
+      <Filter>shaders\deferred</Filter>
+    </None>
+    <None Include="data\shaders\deferred\deferred_light_fs.glsl">
+      <Filter>shaders\deferred</Filter>
+    </None>
+    <None Include="data\shaders\deferred\deferred_light_vs.glsl">
+      <Filter>shaders\deferred</Filter>
     </None>
   </ItemGroup>
 </Project>

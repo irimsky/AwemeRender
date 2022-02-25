@@ -8,7 +8,7 @@ layout(binding=0) uniform samplerCube envTexture;
 
 void main()
 {
-    vec3 envColor = textureLod(envTexture, normalize(localPosition), 0.0).rgb;
-    
+    vec3 envColor = texture(envTexture, normalize(localPosition)).rgb;
+
 	color = vec4(envColor, 1.0f);
 }

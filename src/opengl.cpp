@@ -52,7 +52,8 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	glfwWindowHint(GLFW_STENCIL_BITS, 0);
 	glfwWindowHint(GLFW_SAMPLES, 0);
 
-	GLFWwindow* window = glfwCreateWindow(width, height, "PBR", nullptr, nullptr);
+	std::string tit = "PBR";
+	GLFWwindow* window = glfwCreateWindow(width, height, tit.c_str(), nullptr, nullptr);
 	if (!window) {
 		throw std::runtime_error("GLFW窗口创建失败");
 	}
@@ -75,15 +76,17 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	GLint maxSupportedSamples;
 	glGetIntegerv(GL_MAX_SAMPLES, &maxSupportedSamples);
 	const int samples = glm::min(maxSamples, maxSupportedSamples);
-
+	// 离屏MSAA渲染
 	m_framebuffer = createFrameBufferWithRBO(width, height, samples, GL_RGBA16F, GL_DEPTH24_STENCIL8);
 	if (samples > 0) {
-		m_resolveFramebuffer = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
+		m_interFramebuffer = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
 	}
 	else {
-		m_resolveFramebuffer = m_framebuffer;
+		m_interFramebuffer = m_framebuffer;
 	}
 	m_shadowFrameBuffer = createShadowFrameBuffer(ShadowMapSize, ShadowMapSize);
+	m_gbuffer = createGBuffer(ScreenWidth, ScreenHeight);
+	
 
 	std::printf("OpenGL 4.5 Renderer [%s]\n", glGetString(GL_RENDERER));
 
@@ -108,43 +111,6 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	ImGui_ImplOpenGL3_Init("#version 450");
 
 	return window;
-}
-
-void Renderer::shutdown()
-{
-	if (m_framebuffer.id != m_resolveFramebuffer.id) {
-		deleteFrameBuffer(m_resolveFramebuffer);
-	}
-	deleteFrameBuffer(m_framebuffer);
-	deleteFrameBuffer(m_shadowFrameBuffer);
-
-	glDeleteVertexArrays(1, &m_quadVAO);
-
-	m_skyboxShader.deleteProgram();
-	m_pbrShader.deleteProgram();
-	m_tonemapShader.deleteProgram();
-	m_prefilterShader.deleteProgram();
-	m_irradianceMapShader.deleteProgram();
-	m_dirLightShadowShader.deleteProgram();
-
-	glDeleteBuffers(1, &m_transformUB);
-	glDeleteBuffers(1, &m_shadingUB);
-
-	deleteMeshBuffer(m_skybox);
-	for (int i = 0; i < m_models.size(); ++i)
-	{
-		deleteModel(m_models[i]);
-	}
-
-	//deleteMeshBuffer(m_pbrModel);
-
-	deleteTexture(m_envTexture);
-	deleteTexture(m_irmapTexture);
-	deleteTexture(m_BRDF_LUT);
-
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
 }
 
 void Renderer::setup(const SceneSettings& scene)
@@ -211,13 +177,6 @@ void Renderer::setup(const SceneSettings& scene)
 	m_skybox = createMeshBuffer(Mesh::fromFiles(PROJECT_PATH + "/data/skybox.obj"));
 
 	// 加载PBR模型以及贴图
-	/*m_models.push_back(
-		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\helmet\\helmet.obj", true))
-	);
-	m_models.push_back(
-		ModelPtr(new Model("E:\\Code\\OpenGL\\AwemeRender\\data\\models\\cerberus\\cerberus.obj", true))
-	);
-	m_models[1]->position = Math::vec3(1.0f);*/
 	m_models.push_back(ModelPtr(Model::createPlane()));
 	m_models[0]->rotation = Math::vec3(-90.0f, 0, 0);
 	m_models[0]->scale = 6.0f;
@@ -312,6 +271,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(Model::TexCount + 2, m_BRDF_LUT.id);
 	glEnable(GL_DEPTH_TEST);
 
+	for(int j=0;j<scene.NumLights;++j)
+		glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
+
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i]->visible) continue;
 		transformUniforms.model =
@@ -339,25 +301,223 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 			}
 		}
 
-		for(int j=0;j<scene.NumLights;++j)
-			glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
+		
 
 		m_models[i]->draw();
 	}
 	
 
-	// 多重采样
-	resolveFramebuffer(m_framebuffer, m_resolveFramebuffer);
+	// 在后处理前将其复制到没有多重采样的中介framebuffer上
+	resolveFramebuffer(m_framebuffer, m_interFramebuffer);
 
-	// 将整个framebuffer绘制在屏幕上（中间在着色器中进行一些后处理）
+	// 将整个中介framebuffer绘制在屏幕上（在着色器中进行一些后处理）
 	// 解绑先前的framebuffer，绑定回默认屏幕的framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	m_tonemapShader.use();
-	glBindTextureUnit(0, m_resolveFramebuffer.colorTarget);
+	glBindTextureUnit(0, m_interFramebuffer.colorTarget);
 	glBindVertexArray(m_quadVAO);	// 屏幕VAO
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
 
-	// glfwSwapBuffers(window);
+void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
+{
+	glViewport(0, 0, ScreenWidth, ScreenHeight);
+	// 1. 几何计算Pass
+	TransformUB transformUniforms;
+	transformUniforms.view = camera.getViewMatrix();
+	transformUniforms.projection =
+		glm::perspective(
+			glm::radians(camera.Zoom),
+			float(m_framebuffer.width) / float(m_framebuffer.height),
+			Near, Far
+		);
+	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.id);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
+	
+	// 先将颜色缓冲清空为背景色，如果没有天空盒则将显示该颜色
+	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (!m_geometryPassShader.ID)
+	{
+		m_geometryPassShader = Shader(
+			PROJECT_PATH + "/data/shaders/deferred/deferred_geo_vs.glsl",
+			PROJECT_PATH + "/data/shaders/deferred/deferred_geo_fs.glsl"
+		);
+	}
+	m_geometryPassShader.use();
+	glEnable(GL_DEPTH_TEST);
+
+	for (int i = 0; i < m_models.size(); ++i) {
+		if (!m_models[i]->visible) continue;
+		transformUniforms.model =
+			glm::translate(glm::mat4(1.0f), m_models[i]->position.toGlmVec()) *
+			// TODO: 删去这一段测试用旋转代码
+			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
+			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
+			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
+			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
+		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+
+		for (int j = 0; j < Model::TexCount; ++j)
+		{
+			std::string typeName = TextureTypeNames[j];
+			if (m_models[i]->haveTexture((TextureType)j))
+			{
+				m_geometryPassShader.setBool("have" + typeName, true);
+				glBindTextureUnit(j, m_models[i]->textures[j].id);
+			}
+			else
+			{
+				m_geometryPassShader.setBool("have" + typeName, false);
+				if (j == (int)TextureType::Albedo)
+					m_geometryPassShader.setVec3("commonColor", m_models[i]->color.toGlmVec());
+			}
+		}
+
+		m_models[i]->draw();
+	}
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//m_tonemapShader.use();
+	//glBindTextureUnit(0, m_gbuffer.colorTarget);
+	//glBindVertexArray(m_quadVAO);	// 屏幕VAO
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// 2. 计算光照Pass
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, m_interFramebuffer.id);
+	// 转移深度信息到中介frambuffer
+	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
+
+	// 录入光照信息
+	ShadingUB shadingUniforms;
+	const glm::vec3 eyePosition = camera.Position;
+	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
+	for (int i = 0; i < SceneSettings::NumLights; ++i) {
+		const DirectionalLight& light = scene.dirLights[i];
+		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ light.direction.toGlmVec(), 0.0f });
+		if (light.enabled) {
+			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
+		}
+		else {
+			shadingUniforms.lights[i].radiance = glm::vec4{};
+		}
+		shadingUniforms.lights[i].lightSpaceMatrix = light.lightSpaceMatrix;
+
+		const PointLight& ptLight = scene.ptLights[i];
+		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
+		if (ptLight.enabled) {
+			shadingUniforms.ptLights[i].radiance = glm::vec4(ptLight.radiance.toGlmVec(), 0.0f);
+		}
+		else {
+			shadingUniforms.ptLights[i].radiance = glm::vec4{};
+		}
+	}
+	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
+	
+	
+
+	if (!m_lightPassShader.ID)
+	{
+		m_lightPassShader = Shader(
+			PROJECT_PATH + "/data/shaders/deferred/deferred_light_vs.glsl",
+			PROJECT_PATH + "/data/shaders/deferred/deferred_light_fs.glsl"
+		);
+	}
+	m_lightPassShader.use();
+	glDepthMask(GL_FALSE);
+	glDisable(GL_DEPTH_TEST);
+	
+	unsigned int bindIdx = 0;
+	glBindTextureUnit(bindIdx++, m_gbuffer.positionTarget);
+	glBindTextureUnit(bindIdx++, m_gbuffer.normalTarget);
+	glBindTextureUnit(bindIdx++, m_gbuffer.colorTarget);
+	glBindTextureUnit(bindIdx++, m_gbuffer.rmoTarget);
+	glBindTextureUnit(bindIdx++, m_gbuffer.emissionTarget);
+	m_lightPassShader.setBool("haveSkybox", scene.skybox);
+	if (scene.skybox)
+	{
+		glBindTextureUnit(bindIdx++, m_envTexture.id);
+		glBindTextureUnit(bindIdx++, m_irmapTexture.id);
+	}
+	else
+		m_lightPassShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
+	glBindTextureUnit(bindIdx++, m_BRDF_LUT.id);
+
+	for (int j = 0; j < scene.NumLights; ++j)
+		glBindTextureUnit(bindIdx++, scene.dirLights[j].shadowMap.id);
+	
+	glBindTextureUnit(bindIdx++, m_gbuffer.depthStencilTarget);
+
+	glBindVertexArray(m_quadVAO);	// 屏幕VAO
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+
+	// 天空盒
+	if (scene.skybox) {
+		m_skyboxShader.use();
+		glDepthFunc(GL_LEQUAL);
+		glBindTextureUnit(0, m_envTexture.id);
+		
+		glBindVertexArray(m_skybox.meshes[0]->vao);
+		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
+	}
+
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	m_tonemapShader.use();
+	glBindTextureUnit(0, m_interFramebuffer.colorTarget);
+	glBindVertexArray(m_quadVAO);	// 屏幕VAO
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::shutdown()
+{
+	if (m_framebuffer.id != m_interFramebuffer.id) {
+		deleteFrameBuffer(m_interFramebuffer);
+	}
+	deleteFrameBuffer(m_framebuffer);
+	deleteFrameBuffer(m_shadowFrameBuffer);
+	deleteFrameBuffer(m_gbuffer);
+
+	glDeleteVertexArrays(1, &m_quadVAO);
+
+	m_skyboxShader.deleteProgram();
+	m_pbrShader.deleteProgram();
+	m_tonemapShader.deleteProgram();
+	m_prefilterShader.deleteProgram();
+	m_irradianceMapShader.deleteProgram();
+	m_dirLightShadowShader.deleteProgram();
+
+	glDeleteBuffers(1, &m_transformUB);
+	glDeleteBuffers(1, &m_shadingUB);
+
+	deleteMeshBuffer(m_skybox);
+	for (int i = 0; i < m_models.size(); ++i)
+	{
+		deleteModel(m_models[i]);
+	}
+
+	//deleteMeshBuffer(m_pbrModel);
+
+	deleteTexture(m_envTexture);
+	deleteTexture(m_irmapTexture);
+	deleteTexture(m_BRDF_LUT);
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 
@@ -436,7 +596,7 @@ void Renderer::loadSceneHdr(const std::string& filename)
 		6
 	);
 }
- 
+
 void Renderer::calcLUT() 
 {
 	// 预计算高光部分需要的Look Up Texture (cosTheta, roughness)

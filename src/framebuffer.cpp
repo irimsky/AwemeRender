@@ -104,6 +104,7 @@ FrameBuffer createShadowFrameBuffer(int width, int height)
 	fb.width = width;
 	fb.height = height;
 	fb.samples = 0;
+	
 	return fb;
 }
 
@@ -151,22 +152,87 @@ GBuffer createGBuffer(int width, int height)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.colorTarget, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, fb.colorTarget, 0);
 
 	glGenTextures(1, &fb.rmoTarget);
 	glBindTexture(GL_TEXTURE_2D, fb.rmoTarget);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.rmoTarget, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, fb.rmoTarget, 0);
 
 	glGenTextures(1, &fb.emissionTarget);
 	glBindTexture(GL_TEXTURE_2D, fb.emissionTarget);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, fb.emissionTarget, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, fb.emissionTarget, 0);
+
+	GLuint attachments[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+		GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, attachments);
+
+	// 深度模板附件
+	/*glCreateRenderbuffers(1, &fb.depthStencilTarget);
+	glNamedRenderbufferStorage(fb.depthStencilTarget, GL_DEPTH_COMPONENT, width, height);
+	glNamedFramebufferRenderbuffer(fb.id, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, fb.depthStencilTarget);*/
+
+	glGenTextures(1, &fb.depthStencilTarget);
+	glBindTexture(GL_TEXTURE_2D, fb.depthStencilTarget);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, fb.depthStencilTarget, 0);
+
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLenum status = glCheckNamedFramebufferStatus(fb.id, GL_DRAW_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		throw std::runtime_error("GBuffer Failed: " + std::to_string(status));
+	}
 	return fb;
+}
+
+void deleteFrameBuffer(GBuffer& fb)
+{
+	if (fb.id) {
+		glDeleteFramebuffers(1, &fb.id);
+	}
+	if (fb.colorTarget) {
+		if (fb.samples == 0) {
+			glDeleteTextures(1, &fb.colorTarget);
+		}
+		else {
+			glDeleteRenderbuffers(1, &fb.colorTarget);
+		}
+	}
+	if (fb.depthStencilTarget) {
+		glDeleteRenderbuffers(1, &fb.depthStencilTarget);
+	}
+	if (fb.normalTarget)
+	{
+		glDeleteTextures(1, &fb.normalTarget);
+	}
+	if (fb.positionTarget)
+	{
+		glDeleteTextures(1, &fb.positionTarget);
+	}
+	if (fb.rmoTarget)
+	{
+		glDeleteTextures(1, &fb.rmoTarget);
+	}
+	if (fb.emissionTarget)
+	{
+		glDeleteTextures(1, &fb.emissionTarget);
+	}
+
+	std::memset(&fb, 0, sizeof(FrameBuffer));
 }

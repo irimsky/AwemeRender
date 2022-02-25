@@ -29,8 +29,7 @@ public:
 	GLuint positionTarget, normalTarget, 
 		   rmoTarget,	// rough,metal,occlusion 三合一
 		   emissionTarget;
-
-
 };
 
 GBuffer createGBuffer(int width, int height);
+void deleteFrameBuffer(GBuffer& fb);

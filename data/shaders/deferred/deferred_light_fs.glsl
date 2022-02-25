@@ -2,7 +2,6 @@
 
 const float PI = 3.141592;
 const float Epsilon = 0.00001;
-
 const int NumLights = 3;
 
 // 非金属的F0近似为0.4
@@ -19,16 +18,6 @@ struct PointLight {
 	vec3 radiance;
 };
 
-layout(location=0) in Vertex
-{
-	vec3 position;
-	vec2 texcoord;
-	vec3 normal;
-} vin;
-
-layout(location=0) out vec4 color;
-uniform vec3 commonColor;
-
 layout(std140, binding=1) uniform ShadingUniforms
 {
 	DirectionalLight dirLights[NumLights];
@@ -36,93 +25,52 @@ layout(std140, binding=1) uniform ShadingUniforms
 	vec3 eyePosition;
 };
 
-layout(binding=0) uniform sampler2D albedoTexture;
-layout(binding=1) uniform sampler2D normalTexture;
-layout(binding=2) uniform sampler2D metalnessTexture;
-layout(binding=3) uniform sampler2D roughnessTexture;
-layout(binding=4) uniform sampler2D occlusionTexture;
-layout(binding=5) uniform sampler2D emmisiveTexture;
-layout(binding=6) uniform sampler2D heightTexture;
+layout(location=0) out vec4 color;
+in vec2 TexCoords;
 
-layout(binding=7) uniform samplerCube specularTexture;
-layout(binding=8) uniform samplerCube irradianceTexture;
-layout(binding=9) uniform sampler2D specularBRDF_LUT;
+layout(binding=0) uniform sampler2D gPos;
+layout(binding=1) uniform sampler2D gNormal;
+layout(binding=2) uniform sampler2D gAlbedo;
+layout(binding=3) uniform sampler2D gRMO;
+layout(binding=4) uniform sampler2D gEmmis;
 
-layout(binding=10) uniform sampler2D dirLightShadowMap0;
-layout(binding=11) uniform sampler2D dirLightShadowMap1;
-layout(binding=12) uniform sampler2D dirLightShadowMap2;
 
-uniform bool haveAlbedo;
-uniform bool haveNormal;
-uniform bool haveMetalness;
-uniform bool haveRoughness;
-uniform bool haveOcclusion;
-uniform bool haveEmission;
-uniform bool haveHeight;
+layout(binding=5) uniform samplerCube specularTexture;
+layout(binding=6) uniform samplerCube irradianceTexture;
+layout(binding=7) uniform sampler2D specularBRDF_LUT;
+
+layout(binding=8) uniform sampler2D dirLightShadowMap0;
+layout(binding=9) uniform sampler2D dirLightShadowMap1;
+layout(binding=10) uniform sampler2D dirLightShadowMap2;
+
+layout(binding=11) uniform sampler2D depthMap;
 
 uniform bool haveSkybox;
 uniform vec3 backgroundColor;
 
-float NDF_GGX(float cosLh, float roughness)
-{
-	float alpha   = roughness * roughness;
-	float alphaSq = alpha * alpha;
+float NDF_GGX(float cosLh, float roughness);
+float gaSchlickG1(float cosTheta, float k);
+float gaSchlickGGX(float NdotL, float NdotV, float roughness);
 
-	float denom = (cosLh * cosLh) * (alphaSq - 1.0) + 1.0;
-	return alphaSq / (PI * denom * denom);
-}
-
-
-float gaSchlickG1(float cosTheta, float k)
-{
-	return cosTheta / (cosTheta * (1.0 - k) + k);
-}
-
-float gaSchlickGGX(float NdotL, float NdotV, float roughness)
-{
-	float r = roughness + 1.0;
-	float k = (r * r) / 8.0; // Epic在论文中建议用在直接光部分
-	return gaSchlickG1(NdotL, k) * gaSchlickG1(NdotV, k);
-}
-
-vec3 fresnelSchlick(vec3 F0, float cosTheta)
-{
-	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
-}
-
-// IBL中为了将kd从积分中取出来所做的近似
-vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
-{
-//	color = vec4(F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0), 1.0);
-	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
-}
-
-vec3 getNormalFromMap();
+vec3 fresnelSchlick(vec3 F0, float cosTheta);
+vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness);
 
 float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap);
 float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx);
 
+
 void main()
 {
-	vec3 albedo;
-	if(haveAlbedo)
-		albedo = texture(albedoTexture, vin.texcoord).rgb;
-	else
-		albedo = commonColor;
+	// GBuffer中获取数据
+	vec3 albedo = texture(gAlbedo, TexCoords).rgb;
+	float roughness = texture(gRMO, TexCoords).r;
+	float metalness = texture(gRMO, TexCoords).g;
+	float AO = texture(gRMO, TexCoords).b;
+	vec3 fragPos = texture(gPos, TexCoords).rgb;
+	vec3 emmision = texture(gEmmis, TexCoords).rgb;
+	vec3 N = texture(gNormal, TexCoords).rgb;
 
-	float metalness = 0.0;
-	float roughness = 1.0;
-	if(haveMetalness)
-		metalness = texture(metalnessTexture, vin.texcoord).r;
-	if(haveRoughness)
-		roughness = texture(roughnessTexture, vin.texcoord).r;
-	
-	vec3 V = normalize(eyePosition - vin.position);
-	vec3 N;
-	if(haveNormal)
-		N = getNormalFromMap();
-	else
-		N = vin.normal;
+	vec3 V = normalize(eyePosition - fragPos);
 
 	vec3 R = reflect(-V, N);
 
@@ -156,7 +104,7 @@ void main()
 		// 高光部分
 		// 防止除以0
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
-		vec4 fragPosLightSpace = dirLights[i].lightSpaceMatrix * vec4(vin.position, 1.0);
+		vec4 fragPosLightSpace = dirLights[i].lightSpaceMatrix * vec4(fragPos, 1.0);
 		float visibility = dirLightVisibility(fragPosLightSpace, NdotL, i);
 		directLighting += ((diffuseBRDF + specularBRDF) * Lradiance * NdotL) * visibility;
 	}
@@ -164,7 +112,7 @@ void main()
 	// 点光源
 	for(int i=0; i<NumLights; ++i)
 	{
-		vec3 L = ptLights[i].position - vin.position;
+		vec3 L = ptLights[i].position - fragPos;
 		float dis = length(L);
 		L = normalize(L);
 		// 200距离 1.0	0.022	0.0019
@@ -213,42 +161,45 @@ void main()
 	vec3 specularIBL = (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
 
 	ambientLighting = diffuseIBL + specularIBL;
- 
-
-	// 环境光遮蔽
-	float AO = 1.0f;
-	if(haveOcclusion)
-		AO = texture(occlusionTexture, vin.texcoord).r;
-	
-	// 自发光项
-	vec3 emmision = vec3(0);
-	if(haveEmission)
-		emmision = texture(emmisiveTexture, vin.texcoord).rgb;
 
 	// 最终结果
+//	gl_FragDepth = 0;
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(vec3(N), 1.0);
+//	color = vec4(vec3(texture(depthMap, TexCoords).r), 1.0f);
 }
 
-
-vec3 getNormalFromMap()
+float NDF_GGX(float cosLh, float roughness)
 {
-    vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
+	float alpha   = roughness * roughness;
+	float alphaSq = alpha * alpha;
 
-    vec3 Q1  = dFdx(vin.position);
-    vec3 Q2  = dFdy(vin.position);
-    vec2 st1 = dFdx(vin.texcoord);
-    vec2 st2 = dFdy(vin.texcoord);
-	
-    vec3 N  = normalize(vin.normal);
-	
-    vec3 T  = normalize(Q1*st2.t - Q2*st1.t);
-	
-    vec3 B  = -normalize(cross(N, T));
-    mat3 TBN = mat3(T, B, N);
-    return normalize(TBN * tangentNormal);
+	float denom = (cosLh * cosLh) * (alphaSq - 1.0) + 1.0;
+	return alphaSq / (PI * denom * denom);
 }
 
+
+float gaSchlickG1(float cosTheta, float k)
+{
+	return cosTheta / (cosTheta * (1.0 - k) + k);
+}
+
+float gaSchlickGGX(float NdotL, float NdotV, float roughness)
+{
+	float r = roughness + 1.0;
+	float k = (r * r) / 8.0; // Epic在论文中建议用在直接光部分
+	return gaSchlickG1(NdotL, k) * gaSchlickG1(NdotV, k);
+}
+
+vec3 fresnelSchlick(vec3 F0, float cosTheta)
+{
+	return F0 + (vec3(1.0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+vec3 fresnelRoughness(vec3 F0, float cosTheta, float roughness)
+{
+//	color = vec4(F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0), 1.0);
+	return F0 + (max(vec3(1-roughness), F0) - F0) * pow(max(1.0 - cosTheta, 0.0), 5.0);
+}
 
 vec2 poissonDisk[16] = {
     vec2( -0.94201624, -0.39906216 ),
@@ -282,26 +233,10 @@ float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
     
 	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
 	float visibility = 0;
-	// 3*3模板
-//	for(int x = -1; x <= 1; ++x)
-//	{
-//		for(int y = -1; y <= 1; ++y)
-//		{
-//			float pcfDepth = texture(depthMap, projCoords.xy + vec2(x, y) * texelSize).r; 
-//			visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);      
-//		}
-//	}
 
-	// poisson disk
-//	for(int i=0;i<16;++i)
-//	{
-//		float pcfDepth = texture(depthMap, projCoords.xy + poissonDisk[i] * texelSize).r; 
-//		visibility += smoothstep(currentDepth - bias, currentDepth - 0.5 * bias, pcfDepth);
-//	}
-	// rotated poisson disk
 	for(int i=0;i<16;++i)
 	{
-		float angle = 2.0 * PI * fract(sin(vin.position.x)*10000.0);
+		float angle = 2.0 * PI * fract(sin(fragPosLightSpace.x)*10000.0);
 		float s = sin(angle);
         float c = cos(angle);
 		vec2 randOffset = vec2(

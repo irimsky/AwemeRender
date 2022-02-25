@@ -18,10 +18,11 @@ public:
 	char* preEnv;
 	std::vector<char*> envNames;
 
-	std::string objExt;
-	std::string texExt;
+	bool isDeferred = false;
+	int render = 0;
 
 	float objectYaw;
 	float objectPitch;
+
 	float FPS;
 };

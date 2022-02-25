@@ -15,6 +15,7 @@ float Application::lastFrame = 0.0f;
 float Application::lastFrameTime = 0.0f;
 int Application::frameCount = 0;
 
+
 SceneSettings Application::sceneSetting;
 Camera Application::m_camera(glm::vec3(0.0f, 2.0f, 4.5f));
 
@@ -58,8 +59,10 @@ void Application::run(const std::unique_ptr<Renderer>& renderer)
 
 		if(!showMouse) processInput();
 		renderer->updateShadowMap(sceneSetting, m_camera);
-		renderer->render(m_window, m_camera, sceneSetting);
-
+		if(!sceneSetting.isDeferred)
+			renderer->render(m_window, m_camera, sceneSetting);
+		else
+			renderer->deferredRender(m_window, m_camera, sceneSetting);
 		renderer->renderImgui(sceneSetting);
 		
 		

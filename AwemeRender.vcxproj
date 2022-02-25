@@ -212,6 +212,10 @@
     <None Include="data\shaders\cs_irradiance_map.glsl" />
     <None Include="data\shaders\cs_lut.glsl" />
     <None Include="data\shaders\cs_prefilter.glsl" />
+    <None Include="data\shaders\deferred\deferred_geo_fs.glsl" />
+    <None Include="data\shaders\deferred\deferred_geo_vs.glsl" />
+    <None Include="data\shaders\deferred\deferred_light_fs.glsl" />
+    <None Include="data\shaders\deferred\deferred_light_vs.glsl" />
     <None Include="data\shaders\pbr_fs.glsl" />
     <None Include="data\shaders\pbr_vs.glsl" />
     <None Include="data\shaders\postprocess_fs.glsl" />
