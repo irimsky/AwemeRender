@@ -231,7 +231,7 @@ float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
     
     float currentDepth = projCoords.z;
     
-	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
+	float bias = max(0.005 * (1.0 - cosTheta), 0.0001);
 	float visibility = 0;
 
 	for(int i=0;i<16;++i)

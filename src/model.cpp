@@ -95,6 +95,43 @@ void Model::draw()
 	}
 }
 
+void Model::draw(Shader& shader)
+{
+	for (int j = 0; j < Model::TexCount; ++j)
+	{
+		std::string typeName = TextureTypeNames[j];
+		if (haveTexture((TextureType)j))
+		{
+			shader.setBool("have" + typeName, true);
+			glBindTextureUnit(j, textures[j].id);
+		}
+		else
+		{
+			shader.setBool("have" + typeName, false);
+			if (j == (int)TextureType::Albedo)
+				shader.setVec3("commonColor", color.toGlmVec());
+		}
+	}
+
+	for (int i = 0; i < pbrModel.meshes.size(); ++i)
+	{
+		glBindVertexArray(pbrModel.meshes[i]->vao);
+
+		if (modelType == ModelType::Sphere)
+			glDrawElements(GL_TRIANGLE_STRIP, pbrModel.meshes[i]->numElements, GL_UNSIGNED_INT, 0);
+		else if (modelType == ModelType::Cube)
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		else if (modelType == ModelType::Plane) {
+			glDisable(GL_CULL_FACE);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+			glEnable(GL_CULL_FACE);
+		}
+		else
+			glDrawElements(GL_TRIANGLES, pbrModel.meshes[i]->numElements, GL_UNSIGNED_INT, 0);
+
+		glBindVertexArray(0);
+	}
+}
 
 Model* Model::createSphere()
 {

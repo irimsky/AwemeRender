@@ -3,6 +3,7 @@
 #include "math.hpp"
 #include "meshbuffer.hpp"
 #include "AABB.hpp"
+#include "shader.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -102,6 +103,7 @@ public:
 	bool haveTexture(TextureType type);
 	glm::mat4 getToWorldMatrix();
 	void draw();
+	void draw(Shader& shader);
 
 	AABB getBoundingBox();
 

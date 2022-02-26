@@ -47,7 +47,7 @@ void main()
 	if(haveNormal)
 		N = getNormalFromMap();
 	else
-		N = vin.normal;
+		N = normalize(vin.normal);
 	gNormal = N;
 
 	// basecolor

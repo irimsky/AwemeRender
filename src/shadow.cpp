@@ -56,13 +56,7 @@ void Renderer::updateDirectionalLightShadowMap(DirectionalLight& light, Shader& 
 		shader.setMat4("lightSpaceMatrix", lightMatrix);
 		shader.setMat4("model", model);
 
-		if (m_models[i]->haveTexture(TextureType::Height))
-		{
-			shader.setBool("haveHeight", true);
-			glBindTextureUnit(0, m_models[i]->textures[(int)TextureType::Height].id);
-		}
-
-		m_models[i]->draw();
+		m_models[i]->draw(shader);
 	}
 
 }

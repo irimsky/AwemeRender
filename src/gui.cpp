@@ -14,13 +14,14 @@ void Renderer::renderImgui(SceneSettings& scene)
 		ImGui::Text("Press [left ALT] to show mouse and control GUI");
 		ImGui::Text("FPS:%.2f", scene.FPS);
 
-		static int isForward;
+		static int isForward = 1;
 		ImGui::Text("Rendering:"); ImGui::SameLine();
 		ImGui::RadioButton("Forward", &isForward, 1); ImGui::SameLine();
 		ImGui::RadioButton("Deferred", &isForward, 0);
 		scene.isDeferred = !isForward;
 
-		
+		//ImGui::DragFloat("minn", &scene.minn, 0.0001, 0.0001, 0.005, "%.4f");
+		//ImGui::DragFloat("maxx", &scene.maxx, 0.0001, 0.0001, 0.1, "%.4f");
 		ImGui::SliderFloat("Yaw", &scene.objectYaw, -180.0, 180.0);
 		ImGui::SliderFloat("Pitch", &scene.objectPitch, -180.0, 180.0);
 
@@ -198,9 +199,9 @@ void Renderer::renderImgui(SceneSettings& scene)
 			{
 				ImGui::PushID(j);
 				if (ImGui::ImageButton(
-					/*m_models[i]->haveTexture((TextureType)j)
-					? (GLuint*)m_models[i]->textures[j].id : 0,*/
-					(GLuint*)m_interFramebuffer.depthStencilTarget,
+					m_models[i]->haveTexture((TextureType)j)
+					? (GLuint*)m_models[i]->textures[j].id : 0,
+					//(GLuint*)m_interFramebuffer.depthStencilTarget,
 					size
 				))
 				{

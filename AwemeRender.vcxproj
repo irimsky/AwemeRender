@@ -166,6 +166,7 @@
     <ClCompile Include="lib\Include\stb\libstb.c" />
     <ClCompile Include="src\AABB.cpp" />
     <ClCompile Include="src\application.cpp" />
+    <ClCompile Include="src\deferred.cpp" />
     <ClCompile Include="src\framebuffer.cpp" />
     <ClCompile Include="src\global.cpp" />
     <ClCompile Include="src\image.cpp" />

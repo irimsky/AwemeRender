@@ -9,27 +9,6 @@
 #include <direct.h>
 
 
-struct TransformUB
-{
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
-};
-
-struct ShadingUB
-{
-	struct {
-		glm::vec4 direction;
-		glm::vec4 radiance;
-		glm::mat4 lightSpaceMatrix;
-	} lights[SceneSettings::NumLights];
-	struct {
-		glm::vec4 position;
-		glm::vec4 radiance;
-	} ptLights[SceneSettings::NumLights];
-	glm::vec4 eyePosition;
-};
-
 Renderer::Renderer(){}
 
 GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
@@ -168,19 +147,19 @@ void Renderer::setup(const SceneSettings& scene)
 	m_equirectToCubeShader = ComputeShader(shaderPath + "/cs_equirect2cube.glsl");
 
 	// Shadow Map生成着色器
-	m_dirLightShadowShader 
-		= Shader(shaderPath + "/shadow/directionalDepth_vs.glsl", shaderPath + "/shadow/directionalDepth_fs.glsl");
+	m_dirLightShadowShader = Shader(
+		shaderPath + "/shadow/directionalDepth_vs.glsl",
+		shaderPath + "/shadow/directionalDepth_fs.glsl"
+	);
 
 
-	std::cout << "Start Loading Models:" << std::endl;
 	// 加载天空盒模型
 	m_skybox = createMeshBuffer(Mesh::fromFiles(PROJECT_PATH + "/data/skybox.obj"));
 
-	// 加载PBR模型以及贴图
+	// 加载初始PBR模型以及贴图
 	m_models.push_back(ModelPtr(Model::createPlane()));
 	m_models[0]->rotation = Math::vec3(-90.0f, 0, 0);
 	m_models[0]->scale = 6.0f;
-	
 	
 	// 预计算高光部分需要的Look Up Texture (cosTheta, roughness)
 	calcLUT();
@@ -208,6 +187,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
+	// TODO 封装成光照注册函数
 	ShadingUB shadingUniforms;
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
@@ -236,11 +216,15 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 渲染用的帧缓冲，接下来所有绘制的最后结果都会先保存在这个framebuffer上
 	// 然后再将framebuffer绘制到屏幕上
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer.id);
+	
+	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT); 
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
 
+	// TODO 封装天空盒绘制。后置天空盒，利用early Z
 	// 天空盒
 	if (scene.skybox) {
 		m_skyboxShader.use();
@@ -249,12 +233,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		glBindVertexArray(m_skybox.meshes[0]->vao);
 		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
 	}
-	else
-	{
-		glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-	
+
 	
 	// 模型
 	m_pbrShader.use();
@@ -270,7 +249,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	}
 	glBindTextureUnit(Model::TexCount + 2, m_BRDF_LUT.id);
 	glEnable(GL_DEPTH_TEST);
-
+	
 	for(int j=0;j<scene.NumLights;++j)
 		glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
 
@@ -284,26 +263,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
 			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
-		
-		for (int j = 0; j < Model::TexCount; ++j)
-		{
-			std::string typeName = TextureTypeNames[j];
-			if (m_models[i]->haveTexture((TextureType)j))
-			{
-				m_pbrShader.setBool("have"+typeName, true);
-				glBindTextureUnit(j, m_models[i]->textures[j].id);
-			}
-			else
-			{
-				m_pbrShader.setBool("have" + typeName, false);
-				if (j == (int)TextureType::Albedo)
-					m_pbrShader.setVec3("commonColor", m_models[i]->color.toGlmVec());
-			}
-		}
 
-		
-
-		m_models[i]->draw();
+		// TODO 把shader和纹理填装封装到模型的draw函数
+		m_models[i]->draw(m_pbrShader);
 	}
 	
 
@@ -319,171 +281,10 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
-{
-	glViewport(0, 0, ScreenWidth, ScreenHeight);
-	// 1. 几何计算Pass
-	TransformUB transformUniforms;
-	transformUniforms.view = camera.getViewMatrix();
-	transformUniforms.projection =
-		glm::perspective(
-			glm::radians(camera.Zoom),
-			float(m_framebuffer.width) / float(m_framebuffer.height),
-			Near, Far
-		);
-	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
-	
-	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.id);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
-	
-	// 先将颜色缓冲清空为背景色，如果没有天空盒则将显示该颜色
-	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	if (!m_geometryPassShader.ID)
-	{
-		m_geometryPassShader = Shader(
-			PROJECT_PATH + "/data/shaders/deferred/deferred_geo_vs.glsl",
-			PROJECT_PATH + "/data/shaders/deferred/deferred_geo_fs.glsl"
-		);
-	}
-	m_geometryPassShader.use();
-	glEnable(GL_DEPTH_TEST);
-
-	for (int i = 0; i < m_models.size(); ++i) {
-		if (!m_models[i]->visible) continue;
-		transformUniforms.model =
-			glm::translate(glm::mat4(1.0f), m_models[i]->position.toGlmVec()) *
-			// TODO: 删去这一段测试用旋转代码
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
-			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
-		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
-
-		for (int j = 0; j < Model::TexCount; ++j)
-		{
-			std::string typeName = TextureTypeNames[j];
-			if (m_models[i]->haveTexture((TextureType)j))
-			{
-				m_geometryPassShader.setBool("have" + typeName, true);
-				glBindTextureUnit(j, m_models[i]->textures[j].id);
-			}
-			else
-			{
-				m_geometryPassShader.setBool("have" + typeName, false);
-				if (j == (int)TextureType::Albedo)
-					m_geometryPassShader.setVec3("commonColor", m_models[i]->color.toGlmVec());
-			}
-		}
-
-		m_models[i]->draw();
-	}
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//m_tonemapShader.use();
-	//glBindTextureUnit(0, m_gbuffer.colorTarget);
-	//glBindVertexArray(m_quadVAO);	// 屏幕VAO
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	// 2. 计算光照Pass
-	
-	glBindFramebuffer(GL_FRAMEBUFFER, m_interFramebuffer.id);
-	// 转移深度信息到中介frambuffer
-	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
-
-	// 录入光照信息
-	ShadingUB shadingUniforms;
-	const glm::vec3 eyePosition = camera.Position;
-	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
-	for (int i = 0; i < SceneSettings::NumLights; ++i) {
-		const DirectionalLight& light = scene.dirLights[i];
-		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ light.direction.toGlmVec(), 0.0f });
-		if (light.enabled) {
-			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
-		}
-		else {
-			shadingUniforms.lights[i].radiance = glm::vec4{};
-		}
-		shadingUniforms.lights[i].lightSpaceMatrix = light.lightSpaceMatrix;
-
-		const PointLight& ptLight = scene.ptLights[i];
-		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
-		if (ptLight.enabled) {
-			shadingUniforms.ptLights[i].radiance = glm::vec4(ptLight.radiance.toGlmVec(), 0.0f);
-		}
-		else {
-			shadingUniforms.ptLights[i].radiance = glm::vec4{};
-		}
-	}
-	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
-	
-	
-
-	if (!m_lightPassShader.ID)
-	{
-		m_lightPassShader = Shader(
-			PROJECT_PATH + "/data/shaders/deferred/deferred_light_vs.glsl",
-			PROJECT_PATH + "/data/shaders/deferred/deferred_light_fs.glsl"
-		);
-	}
-	m_lightPassShader.use();
-	glDepthMask(GL_FALSE);
-	glDisable(GL_DEPTH_TEST);
-	
-	unsigned int bindIdx = 0;
-	glBindTextureUnit(bindIdx++, m_gbuffer.positionTarget);
-	glBindTextureUnit(bindIdx++, m_gbuffer.normalTarget);
-	glBindTextureUnit(bindIdx++, m_gbuffer.colorTarget);
-	glBindTextureUnit(bindIdx++, m_gbuffer.rmoTarget);
-	glBindTextureUnit(bindIdx++, m_gbuffer.emissionTarget);
-	m_lightPassShader.setBool("haveSkybox", scene.skybox);
-	if (scene.skybox)
-	{
-		glBindTextureUnit(bindIdx++, m_envTexture.id);
-		glBindTextureUnit(bindIdx++, m_irmapTexture.id);
-	}
-	else
-		m_lightPassShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
-	glBindTextureUnit(bindIdx++, m_BRDF_LUT.id);
-
-	for (int j = 0; j < scene.NumLights; ++j)
-		glBindTextureUnit(bindIdx++, scene.dirLights[j].shadowMap.id);
-	
-	glBindTextureUnit(bindIdx++, m_gbuffer.depthStencilTarget);
-
-	glBindVertexArray(m_quadVAO);	// 屏幕VAO
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
-
-	// 天空盒
-	if (scene.skybox) {
-		m_skyboxShader.use();
-		glDepthFunc(GL_LEQUAL);
-		glBindTextureUnit(0, m_envTexture.id);
-		
-		glBindVertexArray(m_skybox.meshes[0]->vao);
-		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
-	}
-
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	m_tonemapShader.use();
-	glBindTextureUnit(0, m_interFramebuffer.colorTarget);
-	glBindVertexArray(m_quadVAO);	// 屏幕VAO
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-}
 
 void Renderer::shutdown()
 {
+	// TODO 检查一遍还有哪些变量要删除
 	if (m_framebuffer.id != m_interFramebuffer.id) {
 		deleteFrameBuffer(m_interFramebuffer);
 	}
@@ -520,7 +321,7 @@ void Renderer::shutdown()
 	ImGui::DestroyContext();
 }
 
-
+// TODO 好似暂时没用
 GLuint Renderer::createUniformBuffer(const void* data, size_t size)
 {
 	GLuint ubo;
@@ -528,7 +329,6 @@ GLuint Renderer::createUniformBuffer(const void* data, size_t size)
 	glNamedBufferStorage(ubo, size, data, GL_DYNAMIC_STORAGE_BIT);
 	return ubo;
 }
-
 
 void Renderer::loadSceneHdr(const std::string& filename)
 {

@@ -113,4 +113,24 @@ private:
 };
 
 
+// TODO 把UB封装到单独的一个组件文件中
+struct TransformUB
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 projection;
+};
 
+struct ShadingUB
+{
+	struct {
+		glm::vec4 direction;
+		glm::vec4 radiance;
+		glm::mat4 lightSpaceMatrix;
+	} lights[SceneSettings::NumLights];
+	struct {
+		glm::vec4 position;
+		glm::vec4 radiance;
+	} ptLights[SceneSettings::NumLights];
+	glm::vec4 eyePosition;
+};

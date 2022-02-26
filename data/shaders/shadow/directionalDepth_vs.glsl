@@ -6,7 +6,7 @@ layout(location=2) in vec2 texcoord;
 uniform mat4 lightSpaceMatrix;
 uniform mat4 model;
 
-layout(binding=0) uniform sampler2D heightTexture;
+layout(binding=6) uniform sampler2D heightTexture;
 uniform bool haveHeight;
 
 void main()

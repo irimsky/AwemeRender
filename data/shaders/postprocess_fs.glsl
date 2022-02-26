@@ -24,9 +24,9 @@ void main()
 {
 	vec3 color = texture(sceneColor, screenPosition).rgb * exposure;
 
-	// HDRµ½LDRµÄÉ«µ÷Ó³Éä, tone mapping£¬²Î¿¼£ºhttps://zhuanlan.zhihu.com/p/21983679
+	// HDRåˆ°LDRçš„è‰²è°ƒæ˜ å°„, tone mappingï¼Œå‚è€ƒï¼šhttps://zhuanlan.zhihu.com/p/21983679
 	vec3 mappedColor = ACESToneMapping(color);
 
-	// Ù¤Âí½ÃÕı
+	// ä¼½é©¬çŸ«æ­£
 	outColor = vec4(pow(mappedColor, vec3(1.0/gamma)), 1.0);
 }

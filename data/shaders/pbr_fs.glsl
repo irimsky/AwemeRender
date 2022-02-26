@@ -118,11 +118,12 @@ void main()
 		roughness = texture(roughnessTexture, vin.texcoord).r;
 	
 	vec3 V = normalize(eyePosition - vin.position);
+	
 	vec3 N;
 	if(haveNormal)
 		N = getNormalFromMap();
 	else
-		N = vin.normal;
+		N = normalize(vin.normal);
 
 	vec3 R = reflect(-V, N);
 
@@ -143,7 +144,7 @@ void main()
 		float NdotL = max(0.0, dot(N, L));
 		float NdotH = max(0.0, dot(N, H));
 		float HdotV = max(0.0, dot(H, V));
-
+		
 		vec3  F = fresnelSchlick(F0, HdotV);
 		float D = NDF_GGX(NdotH, roughness);
 		float G = gaSchlickGGX(NdotL, NdotV, roughness);
@@ -158,6 +159,7 @@ void main()
 		vec3 specularBRDF = (F * D * G) / max(Epsilon, 4.0 * NdotL * NdotV);
 		vec4 fragPosLightSpace = dirLights[i].lightSpaceMatrix * vec4(vin.position, 1.0);
 		float visibility = dirLightVisibility(fragPosLightSpace, NdotL, i);
+		
 		directLighting += ((diffuseBRDF + specularBRDF) * Lradiance * NdotL) * visibility;
 	}
 
@@ -227,14 +229,13 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(vec3(N), 1.0);
 }
 
 
 vec3 getNormalFromMap()
 {
     vec3 tangentNormal = texture(normalTexture, vin.texcoord).rgb * 2.0 - 1.0;
-
+	
     vec3 Q1  = dFdx(vin.position);
     vec3 Q2  = dFdy(vin.position);
     vec2 st1 = dFdx(vin.texcoord);
@@ -246,6 +247,7 @@ vec3 getNormalFromMap()
 	
     vec3 B  = -normalize(cross(N, T));
     mat3 TBN = mat3(T, B, N);
+	
     return normalize(TBN * tangentNormal);
 }
 
@@ -280,7 +282,7 @@ float dirLightShadow(vec4 fragPosLightSpace, float cosTheta, sampler2D depthMap)
     
     float currentDepth = projCoords.z;
     
-	float bias = max(0.05 * (1.0 - cosTheta), 0.005);
+	float bias = max(0.005 * (1.0 - cosTheta), 0.0001);
 	float visibility = 0;
 	// 3*3模板
 //	for(int x = -1; x <= 1; ++x)
