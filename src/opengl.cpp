@@ -38,23 +38,22 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	}
 
 	glfwMakeContextCurrent(window);
-	// 设置监视器的最低刷新数
 	glfwSwapInterval(-1);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		throw std::runtime_error("");
+		throw std::runtime_error("GLAD init failed");
 	}
-	// 最大各向异性层数
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &m_capabilities.maxAnisotropy);
 
 #if _DEBUG
 	glDebugMessageCallback(Renderer::logMessage, nullptr);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 #endif
-	// 最大的MSAA子采样点数
+
+	// 支持的最大的MSAA子采样点数
 	GLint maxSupportedSamples;
 	glGetIntegerv(GL_MAX_SAMPLES, &maxSupportedSamples);
 	const int samples = glm::min(maxSamples, maxSupportedSamples);
+	
 	// 离屏MSAA渲染
 	m_framebuffer = createFrameBufferWithRBO(width, height, samples, GL_RGBA16F, GL_DEPTH24_STENCIL8);
 	if (samples > 0) {
@@ -63,6 +62,7 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	else {
 		m_interFramebuffer = m_framebuffer;
 	}
+
 	m_shadowFrameBuffer = createShadowFrameBuffer(ShadowMapSize, ShadowMapSize);
 	m_gbuffer = createGBuffer(ScreenWidth, ScreenHeight);
 	
@@ -125,7 +125,7 @@ void Renderer::setup(const SceneSettings& scene)
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	// 创建Uniform Buffer
+	// 初始化Uniform Buffer结构体
 	m_transformUB = createUniformBuffer<TransformUB>();
 	m_shadingUB = createUniformBuffer<ShadingUB>();
 
@@ -150,7 +150,7 @@ void Renderer::setup(const SceneSettings& scene)
 	// 加载天空盒模型
 	m_skybox = createMeshBuffer(Mesh::fromFiles(PROJECT_PATH + "/data/skybox.obj"));
 
-	// 加载初始PBR模型以及贴图
+	// 加载初始PBR模型（平面）
 	m_models.push_back(ModelPtr(Model::createPlane()));
 	m_models[0]->rotation = Math::vec3(-90.0f, 0, 0);
 	m_models[0]->scale = 6.0f;
@@ -181,30 +181,10 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
-	// TODO 封装成光照注册函数
 	ShadingUB shadingUniforms;
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
-	for (int i = 0; i < SceneSettings::NumLights; ++i) {
-		const DirectionalLight& light = scene.dirLights[i];
-		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ light.direction.toGlmVec(), 0.0f });
-		if (light.enabled) {
-			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
-		}
-		else {
-			shadingUniforms.lights[i].radiance = glm::vec4{};
-		}
-		shadingUniforms.lights[i].lightSpaceMatrix = light.lightSpaceMatrix;
-
-		const PointLight& ptLight = scene.ptLights[i];
-		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
-		if (ptLight.enabled) {
-			shadingUniforms.ptLights[i].radiance = glm::vec4(ptLight.radiance.toGlmVec(), 0.0f);
-		}
-		else {
-			shadingUniforms.ptLights[i].radiance = glm::vec4{};
-		}
-	}
+	registerLight(shadingUniforms, scene);
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
 	
 	// 渲染用的帧缓冲，接下来所有绘制的最后结果都会先保存在这个framebuffer上
@@ -216,16 +196,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
-
-	// TODO 封装天空盒绘制。后置天空盒，利用early Z
-	// 天空盒
-	/*if (scene.skybox) {
-		m_skyboxShader.use();
-		glDisable(GL_DEPTH_TEST);
-		glBindTextureUnit(0, m_envTexture.id);
-		glBindVertexArray(m_skybox.meshes[0]->vao);
-		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
-	}*/
 
 	
 	// 模型

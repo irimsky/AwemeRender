@@ -60,27 +60,7 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	// 录入光照信息
 	ShadingUB shadingUniforms;
 	const glm::vec3 eyePosition = camera.Position;
-	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
-	for (int i = 0; i < SceneSettings::NumLights; ++i) {
-		const DirectionalLight& light = scene.dirLights[i];
-		shadingUniforms.lights[i].direction = glm::normalize(glm::vec4{ light.direction.toGlmVec(), 0.0f });
-		if (light.enabled) {
-			shadingUniforms.lights[i].radiance = glm::vec4{ light.radiance.toGlmVec(), 0.0f };
-		}
-		else {
-			shadingUniforms.lights[i].radiance = glm::vec4{};
-		}
-		shadingUniforms.lights[i].lightSpaceMatrix = light.lightSpaceMatrix;
-
-		const PointLight& ptLight = scene.ptLights[i];
-		shadingUniforms.ptLights[i].position = glm::vec4(ptLight.position.toGlmVec(), 0.0f);
-		if (ptLight.enabled) {
-			shadingUniforms.ptLights[i].radiance = glm::vec4(ptLight.radiance.toGlmVec(), 0.0f);
-		}
-		else {
-			shadingUniforms.ptLights[i].radiance = glm::vec4{};
-		}
-	}
+	registerLight(shadingUniforms, scene);
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
 

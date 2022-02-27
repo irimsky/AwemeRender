@@ -9,7 +9,8 @@
 
 
 // 创建用RBO做附件的FBO
-FrameBuffer createFrameBufferWithRBO(int width, int height, int samples,
+FrameBuffer createFrameBufferWithRBO(
+	int width, int height, int samples,
 	GLenum colorFormat, GLenum depthstencilFormat
 )
 {

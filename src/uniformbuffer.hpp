@@ -29,3 +29,5 @@ struct ShadingUB
 	} ptLights[SceneSettings::NumLights];
 	glm::vec4 eyePosition;
 };
+
+void registerLight(ShadingUB& shadingUB, const SceneSettings& scene);

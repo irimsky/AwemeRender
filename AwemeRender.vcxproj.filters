@@ -28,24 +28,21 @@
     <Filter Include="shaders\deferred">
       <UniqueIdentifier>{ebdf5126-9343-4171-a8b7-2c94c54488de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="源文件\component">
+      <UniqueIdentifier>{4a527431-d017-4a9b-967a-48386606994e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="头文件\component">
+      <UniqueIdentifier>{b60f9df5-7a04-4234-a4b7-b524eccff753}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\image.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\mesh.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\opengl.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="lib\Include\glad\glad.c">
@@ -75,18 +72,6 @@
     <ClCompile Include="lib\Include\imgui\imgui_widgets.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
-    <ClCompile Include="src\texture.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\framebuffer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\model.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\meshbuffer.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\gui.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -96,45 +81,45 @@
     <ClCompile Include="src\shadow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\AABB.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\deferred.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\AABB.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\framebuffer.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\image.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\model.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mesh.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\meshbuffer.cpp">
+      <Filter>源文件\component</Filter>
+    </ClCompile>
     <ClCompile Include="src\uniformbuffer.cpp">
-      <Filter>源文件</Filter>
+      <Filter>源文件\component</Filter>
+    </ClCompile>
+    <ClCompile Include="src\texture.cpp">
+      <Filter>源文件\component</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\camera.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\image.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\math.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\mesh.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\opengl.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\renderer.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\scene_setting.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\shader.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utils.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="lib\Include\imgui\backends\imgui_impl_glfw.h">
@@ -164,29 +149,50 @@
     <ClInclude Include="lib\Include\imgui\imstb_truetype.h">
       <Filter>imgui</Filter>
     </ClInclude>
-    <ClInclude Include="src\light.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\texture.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\framebuffer.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\model.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\meshbuffer.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\global.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\AABB.hpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\camera.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\framebuffer.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\image.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\light.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\math.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mesh.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\meshbuffer.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\model.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shader.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\texture.hpp">
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene_setting.hpp">
+      <Filter>头文件\component</Filter>
     </ClInclude>
     <ClInclude Include="src\uniformbuffer.hpp">
-      <Filter>头文件</Filter>
+      <Filter>头文件\component</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils.hpp">
+      <Filter>头文件\component</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
