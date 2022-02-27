@@ -28,19 +28,25 @@ public:
 	GLFWwindow* initialize(int width, int height, int maxSamples) ;
 	void setup(const SceneSettings& scene) ;
 	void render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
+	
 	void deferredRender(GLFWwindow* window, const Camera& camera, const SceneSettings& scene);
 	void renderImgui(SceneSettings& scene);
 	void shutdown();
 	void updateShadowMap(SceneSettings& scene, const Camera& camera);
 
 private:
+	// 绘制天空盒
+	void drawSkybox();
+
 	// 初始化深度图
 	void initShadowMap(SceneSettings& scene);
+
 	// 更新方向光的深度图
 	void updateDirectionalLightShadowMap(DirectionalLight& light, Shader& shader);
 
 	// 加载场景HDR
 	void loadSceneHdr(const std::string& filename);
+
 	// 计算Look Up Texture
 	void calcLUT();
 

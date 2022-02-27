@@ -125,14 +125,8 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	glEnable(GL_DEPTH_TEST);
 
 	// 天空盒
-	if (scene.skybox) {
-		m_skyboxShader.use();
-		glDepthFunc(GL_LEQUAL);
-		glBindTextureUnit(0, m_envTexture.id);
-
-		glBindVertexArray(m_skybox.meshes[0]->vao);
-		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
-	}
+	if (scene.skybox)
+		drawSkybox();
 
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

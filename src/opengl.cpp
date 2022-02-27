@@ -147,7 +147,6 @@ void Renderer::setup(const SceneSettings& scene)
 		shaderPath + "/shadow/directionalDepth_fs.glsl"
 	);
 
-
 	// 加载天空盒模型
 	m_skybox = createMeshBuffer(Mesh::fromFiles(PROJECT_PATH + "/data/skybox.obj"));
 
@@ -220,27 +219,23 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 
 	// TODO 封装天空盒绘制。后置天空盒，利用early Z
 	// 天空盒
-	if (scene.skybox) {
+	/*if (scene.skybox) {
 		m_skyboxShader.use();
 		glDisable(GL_DEPTH_TEST);
 		glBindTextureUnit(0, m_envTexture.id);
 		glBindVertexArray(m_skybox.meshes[0]->vao);
 		glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
-	}
+	}*/
 
 	
 	// 模型
 	m_pbrShader.use();
 	m_pbrShader.setBool("haveSkybox", scene.skybox);
-	if (!scene.skybox)
-	{
-		m_pbrShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
-	}
-	else
-	{
-		glBindTextureUnit(Model::TexCount, m_envTexture.id);
-		glBindTextureUnit(Model::TexCount + 1, m_irmapTexture.id);
-	}
+	// 如果不显示天空盒则为背景色
+	m_pbrShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
+	
+	glBindTextureUnit(Model::TexCount, m_envTexture.id);
+	glBindTextureUnit(Model::TexCount + 1, m_irmapTexture.id);
 	glBindTextureUnit(Model::TexCount + 2, m_BRDF_LUT.id);
 	glEnable(GL_DEPTH_TEST);
 	
@@ -261,8 +256,11 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		// TODO 把shader和纹理填装封装到模型的draw函数
 		m_models[i]->draw(m_pbrShader);
 	}
-	
 
+	// 天空盒
+	if (scene.skybox) 
+		drawSkybox();
+	
 	// 在后处理前将其复制到没有多重采样的中介framebuffer上
 	resolveFramebuffer(m_framebuffer, m_interFramebuffer);
 
@@ -275,6 +273,15 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void Renderer::drawSkybox()
+{
+	m_skyboxShader.use();
+	glDepthFunc(GL_LEQUAL);
+	glBindTextureUnit(0, m_envTexture.id);
+	glBindVertexArray(m_skybox.meshes[0]->vao);
+	glDrawElements(GL_TRIANGLES, m_skybox.meshes[0]->numElements, GL_UNSIGNED_INT, 0);
+	glDepthFunc(GL_LESS);
+}
 
 void Renderer::shutdown()
 {
@@ -314,15 +321,6 @@ void Renderer::shutdown()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 }
-
-// TODO 好似暂时没用
-//GLuint Renderer::createUniformBuffer(const void* data, size_t size)
-//{
-//	GLuint ubo;
-//	glCreateBuffers(1, &ubo);
-//	glNamedBufferStorage(ubo, size, data, GL_DYNAMIC_STORAGE_BIT);
-//	return ubo;
-//}
 
 void Renderer::loadSceneHdr(const std::string& filename)
 {
@@ -409,6 +407,7 @@ void Renderer::calcLUT()
 	);
 	LUTShader.deleteProgram();
 }
+
 
 #if _DEBUG
 void Renderer::logMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)

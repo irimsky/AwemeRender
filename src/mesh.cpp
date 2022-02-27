@@ -14,7 +14,7 @@
 
 
 const unsigned int ImportFlags =
-	aiProcess_CalcTangentSpace |
+	//aiProcess_CalcTangentSpace |
 	aiProcess_Triangulate |
 	aiProcess_SortByPType |
 	aiProcess_PreTransformVertices |
