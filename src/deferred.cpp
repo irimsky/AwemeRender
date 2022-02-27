@@ -3,6 +3,7 @@
 void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
 {
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
+	// TODO 封装两个Pass
 	// 1. 几何计算Pass
 	TransformUB transformUniforms;
 	transformUniforms.view = camera.getViewMatrix();
@@ -44,12 +45,6 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 
 		m_models[i]->draw(m_geometryPassShader);
 	}
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//m_tonemapShader.use();
-	//glBindTextureUnit(0, m_gbuffer.colorTarget);
-	//glBindVertexArray(m_quadVAO);	// 屏幕VAO
-	//glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0.0, 0.0, 0.0, 1.0);

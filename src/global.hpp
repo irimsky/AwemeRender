@@ -11,4 +11,7 @@ extern const float OrbitSpeed;
 extern const float Near;
 extern const float Far;
 
+extern const int EnvMapSize;
+extern const int IrradianceMapSize;
+extern const int BRDF_LUT_Size;
 extern const int ShadowMapSize;

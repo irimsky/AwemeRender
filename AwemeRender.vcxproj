@@ -178,6 +178,7 @@
     <ClCompile Include="src\opengl.cpp" />
     <ClCompile Include="src\shadow.cpp" />
     <ClCompile Include="src\texture.cpp" />
+    <ClCompile Include="src\uniformbuffer.cpp" />
     <ClCompile Include="src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -206,6 +207,7 @@
     <ClInclude Include="src\scene_setting.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\texture.hpp" />
+    <ClInclude Include="src\uniformbuffer.hpp" />
     <ClInclude Include="src\utils.hpp" />
   </ItemGroup>
   <ItemGroup>

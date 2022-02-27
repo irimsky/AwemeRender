@@ -7,6 +7,7 @@
 #include "framebuffer.hpp"
 #include "scene_setting.hpp"
 #include "meshbuffer.hpp"
+#include "uniformbuffer.hpp"
 
 #include <imgui_impl_opengl3.h>
 #include <imgui.h>
@@ -33,21 +34,18 @@ public:
 	void updateShadowMap(SceneSettings& scene, const Camera& camera);
 
 private:
-	static GLuint createUniformBuffer(const void* data, size_t size);
-
+	// 初始化深度图
 	void initShadowMap(SceneSettings& scene);
-	
+	// 更新方向光的深度图
 	void updateDirectionalLightShadowMap(DirectionalLight& light, Shader& shader);
 
+	// 加载场景HDR
 	void loadSceneHdr(const std::string& filename);
+	// 计算Look Up Texture
 	void calcLUT();
-	
-	void updateAABB(const Camera& camera);
 
-	template<typename T> GLuint createUniformBuffer(const T* data = nullptr)
-	{
-		return createUniformBuffer(data, sizeof(T));
-	}
+	// 更新AABB
+	void updateAABB(const Camera& camera);
 
 #if _DEBUG
 	static void logMessage(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam);
@@ -65,9 +63,6 @@ private:
 	
 
 	MeshBuffer m_skybox;
-	MeshBuffer m_pbrModel;
-	
-	
 	
 	typedef std::shared_ptr<Model> ModelPtr;
 	std::vector<ModelPtr> m_models;
@@ -89,48 +84,14 @@ private:
 	Shader m_geometryPassShader;
 	Shader m_lightPassShader;
 
-	int m_EnvMapSize;
-	int m_IrradianceMapSize;
-	int m_BRDF_LUT_Size;
-
 	Texture m_envTexture;
 	Texture m_irmapTexture;
 	Texture m_BRDF_LUT;
-
-	Texture m_albedoTexture;
-	Texture m_normalTexture;
-	Texture m_metalnessTexture;
-	Texture m_roughnessTexture;
-	Texture m_occlusionTexture;
-	Texture m_emissionTexture;
-	Texture m_heightTexture;
 
 	GLuint m_transformUB;
 	GLuint m_shadingUB;
 
 	AABB m_boundingBox;
-	
 };
 
 
-// TODO 把UB封装到单独的一个组件文件中
-struct TransformUB
-{
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
-};
-
-struct ShadingUB
-{
-	struct {
-		glm::vec4 direction;
-		glm::vec4 radiance;
-		glm::mat4 lightSpaceMatrix;
-	} lights[SceneSettings::NumLights];
-	struct {
-		glm::vec4 position;
-		glm::vec4 radiance;
-	} ptLights[SceneSettings::NumLights];
-	glm::vec4 eyePosition;
-};

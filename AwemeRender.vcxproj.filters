@@ -102,6 +102,9 @@
     <ClCompile Include="src\deferred.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\uniformbuffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\application.hpp">
@@ -180,6 +183,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\AABB.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\uniformbuffer.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -94,11 +94,6 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 
 void Renderer::setup(const SceneSettings& scene)
 {
-	// 各种贴图大小
-	m_EnvMapSize = 1024;	// 必须是2的次幂
-	m_IrradianceMapSize = 32;
-	m_BRDF_LUT_Size = 512;
-
 	m_selectedIdx = -1;
 
 	// 设置OpenGL全局状态
@@ -176,7 +171,7 @@ void Renderer::setup(const SceneSettings& scene)
 void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSettings& scene)
 {
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
-	//glDisable(GL_CULL_FACE);
+	
 	TransformUB transformUniforms;
 	transformUniforms.view = camera.getViewMatrix();
 	transformUniforms.projection =
@@ -218,8 +213,7 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer.id);
 	
 	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-	glClear(GL_DEPTH_BUFFER_BIT); 
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
@@ -250,8 +244,8 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	glBindTextureUnit(Model::TexCount + 2, m_BRDF_LUT.id);
 	glEnable(GL_DEPTH_TEST);
 	
-	for(int j=0;j<scene.NumLights;++j)
-		glBindTextureUnit(Model::TexCount + 3 + j, scene.dirLights[j].shadowMap.id);
+	for (int i = 0; i < scene.NumLights; ++i)
+		glBindTextureUnit(Model::TexCount + 3 + i, scene.dirLights[i].shadowMap.id);
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i]->visible) continue;
@@ -322,18 +316,18 @@ void Renderer::shutdown()
 }
 
 // TODO 好似暂时没用
-GLuint Renderer::createUniformBuffer(const void* data, size_t size)
-{
-	GLuint ubo;
-	glCreateBuffers(1, &ubo);
-	glNamedBufferStorage(ubo, size, data, GL_DYNAMIC_STORAGE_BIT);
-	return ubo;
-}
+//GLuint Renderer::createUniformBuffer(const void* data, size_t size)
+//{
+//	GLuint ubo;
+//	glCreateBuffers(1, &ubo);
+//	glNamedBufferStorage(ubo, size, data, GL_DYNAMIC_STORAGE_BIT);
+//	return ubo;
+//}
 
 void Renderer::loadSceneHdr(const std::string& filename)
 {
 	// “尚未预滤波的环境贴图”变量（Cube Map类型)
-	Texture envTextureUnfiltered = createTexture(GL_TEXTURE_CUBE_MAP, m_EnvMapSize, m_EnvMapSize, GL_RGBA16F);
+	Texture envTextureUnfiltered = createTexture(GL_TEXTURE_CUBE_MAP, EnvMapSize, EnvMapSize, GL_RGBA16F);
 
 	std::string envFilePath = PROJECT_PATH;
 	envFilePath += "\\data\\hdr\\" + filename;
@@ -358,7 +352,7 @@ void Renderer::loadSceneHdr(const std::string& filename)
 	glGenerateTextureMipmap(envTextureUnfiltered.id);
 
 	// 环境贴图（cube map型）
-	m_envTexture = createTexture(GL_TEXTURE_CUBE_MAP, m_EnvMapSize, m_EnvMapSize, GL_RGBA16F);
+	m_envTexture = createTexture(GL_TEXTURE_CUBE_MAP, EnvMapSize, EnvMapSize, GL_RGBA16F);
 	// 复制“尚未预滤波的环境贴图”mipmap第0层（原图）到环境贴图的第0层上
 	glCopyImageSubData(envTextureUnfiltered.id, GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0,
 		m_envTexture.id, GL_TEXTURE_CUBE_MAP, 0, 0, 0, 0,
@@ -369,7 +363,7 @@ void Renderer::loadSceneHdr(const std::string& filename)
 	glBindTextureUnit(0, envTextureUnfiltered.id);
 	// 根据粗糙度不同，对环境贴图进行预滤波（从第1级mipmap开始，第0级是原图）
 	const float maxMipmapLevels = glm::max(float(m_envTexture.levels - 1), 1.0f);
-	int size = m_EnvMapSize / 2;
+	int size = EnvMapSize / 2;
 	for (int level = 1; level <= maxMipmapLevels; ++level) {
 		const GLuint numGroups = glm::max(1, size / 32);
 		// 将指定层级的纹理贴图绑定
@@ -385,7 +379,7 @@ void Renderer::loadSceneHdr(const std::string& filename)
 
 	// 预计算漫反射用的 irradiance map.
 
-	m_irmapTexture = createTexture(GL_TEXTURE_CUBE_MAP, m_IrradianceMapSize, m_IrradianceMapSize, GL_RGBA16F, 1);
+	m_irmapTexture = createTexture(GL_TEXTURE_CUBE_MAP, IrradianceMapSize, IrradianceMapSize, GL_RGBA16F, 1);
 
 	m_irradianceMapShader.use();
 	glBindTextureUnit(0, m_envTexture.id);
@@ -402,7 +396,7 @@ void Renderer::calcLUT()
 	// 预计算高光部分需要的Look Up Texture (cosTheta, roughness)
 	ComputeShader LUTShader = ComputeShader("data/shaders/cs_lut.glsl");
 
-	m_BRDF_LUT = createTexture(GL_TEXTURE_2D, m_BRDF_LUT_Size, m_BRDF_LUT_Size, GL_RG16F, 1);
+	m_BRDF_LUT = createTexture(GL_TEXTURE_2D, BRDF_LUT_Size, BRDF_LUT_Size, GL_RG16F, 1);
 	glTextureParameteri(m_BRDF_LUT.id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(m_BRDF_LUT.id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
