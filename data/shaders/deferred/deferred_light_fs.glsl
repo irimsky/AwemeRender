@@ -165,7 +165,7 @@ void main()
 	// 最终结果
 //	gl_FragDepth = 0;
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
-//	color = vec4(vec3(texture(depthMap, TexCoords).r), 1.0f);
+//	color = vec4(V, 1.0);
 }
 
 float NDF_GGX(float cosLh, float roughness)

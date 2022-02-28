@@ -129,9 +129,8 @@ void Renderer::setup(const SceneSettings& scene)
 	m_transformUB = createUniformBuffer<TransformUB>();
 	m_shadingUB = createUniformBuffer<ShadingUB>();
 
-	// 后处理、天空盒、pbr着色器
 	std::string shaderPath = PROJECT_PATH + "/data/shaders";
-
+	// 后处理、天空盒、pbr着色器
 	m_tonemapShader = Shader(shaderPath + "/postprocess_vs.glsl", shaderPath + "/postprocess_fs.glsl");
 	m_pbrShader = Shader(shaderPath + "/pbr_vs.glsl", shaderPath + "/pbr_fs.glsl");
 	m_skyboxShader = Shader(shaderPath + "/skybox_vs.glsl", shaderPath + "/skybox_fs.glsl");
@@ -190,10 +189,12 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 渲染用的帧缓冲，接下来所有绘制的最后结果都会先保存在这个framebuffer上
 	// 然后再将framebuffer绘制到屏幕上
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer.id);
-	
+
+	// 如果不显示天空盒则为背景色
 	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+	
+	// 绑定Uniform Buffer
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
 
@@ -201,7 +202,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 模型
 	m_pbrShader.use();
 	m_pbrShader.setBool("haveSkybox", scene.skybox);
-	// 如果不显示天空盒则为背景色
 	m_pbrShader.setVec3("backgroundColor", scene.backgroundColor.toGlmVec());
 	
 	glBindTextureUnit(Model::TexCount, m_envTexture.id);
@@ -223,7 +223,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 
-		// TODO 把shader和纹理填装封装到模型的draw函数
 		m_models[i]->draw(m_pbrShader);
 	}
 

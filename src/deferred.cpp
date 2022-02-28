@@ -14,9 +14,10 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 			Near, Far
 		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.id);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
+	
 
 	// 先将颜色缓冲清空为背景色，如果没有天空盒则将显示该颜色
 	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
@@ -53,13 +54,11 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	// 2. 计算光照Pass
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_interFramebuffer.id);
-	// 转移深度信息到中介frambuffer
-	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
-
+	
 	// 录入光照信息
 	ShadingUB shadingUniforms;
 	const glm::vec3 eyePosition = camera.Position;
+	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
 	registerLight(shadingUniforms, scene);
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
@@ -103,6 +102,10 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
+
+	// 转移深度信息到中介frambuffer
+	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
 
 	// 天空盒
 	if (scene.skybox)

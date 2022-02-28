@@ -229,6 +229,7 @@ void main()
 
 	// 最终结果
 	color = vec4(directLighting + AO * ambientLighting + emmision, 1.0);
+//	color = vec4(R, 1.0);
 }
 
 
