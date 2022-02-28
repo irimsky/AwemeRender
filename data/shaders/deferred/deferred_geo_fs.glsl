@@ -5,6 +5,10 @@ layout(location=0) in Vertex
 	vec3 position;
 	vec2 texcoord;
 	vec3 normal;
+
+	vec2 jitter;
+	vec4 preScreenPosition;
+	vec4 nowScreenPosition;
 } vin;
 
 layout(location=0) out vec3 gPos;
@@ -12,6 +16,7 @@ layout(location=1) out vec3 gNormal;
 layout(location=2) out vec3 gAlbedo;
 layout(location=3) out vec3 gRMO;
 layout(location=4) out vec3 gEmmis;
+layout(location=5) out vec2 gVelo;
 
 uniform vec3 commonColor;
 
@@ -76,6 +81,11 @@ void main()
 	if(haveEmission)
 		emmision = texture(emmisiveTexture, vin.texcoord).rgb;
 	gEmmis = emmision;
+
+	// velocity
+	vec2 newPos = ((vin.nowScreenPosition.xy / vin.nowScreenPosition.w) * 0.5 + 0.5);
+	vec2 prePos = ((vin.preScreenPosition.xy / vin.preScreenPosition.w) * 0.5 + 0.5);
+	gVelo = newPos - prePos;
 }
 
 vec3 getNormalFromMap()

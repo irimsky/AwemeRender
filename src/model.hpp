@@ -101,7 +101,11 @@ public:
 
 	void loadTexture(std::string filePath, TextureType type);
 	bool haveTexture(TextureType type);
+
 	glm::mat4 getToWorldMatrix();
+	void setPreModelMatrix(const glm::mat4& mat);
+	glm::mat4 getPreModelMatrix();
+
 	void draw();
 	void draw(Shader& shader);
 
@@ -109,6 +113,7 @@ public:
 
 
 protected:
+	glm::mat4 preModelMat;
 	static std::unordered_map<std::string, int> nameCount;
 };
 

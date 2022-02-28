@@ -95,7 +95,13 @@ private:
 	Texture m_BRDF_LUT;
 
 	GLuint m_transformUB;
+	TransformUB transformUniforms;
 	GLuint m_shadingUB;
+	ShadingUB shadingUniforms;
+	GLuint m_taaUB;
+	TaaUB taaUniforms;
+
+	glm::mat4 preView, preProj;
 
 	AABB m_boundingBox;
 };

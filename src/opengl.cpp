@@ -128,6 +128,7 @@ void Renderer::setup(const SceneSettings& scene)
 	// 初始化Uniform Buffer结构体
 	m_transformUB = createUniformBuffer<TransformUB>();
 	m_shadingUB = createUniformBuffer<ShadingUB>();
+	m_taaUB = createUniformBuffer<TaaUB>();
 
 	std::string shaderPath = PROJECT_PATH + "/data/shaders";
 	// 后处理、天空盒、pbr着色器
@@ -170,7 +171,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 {
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
 	
-	TransformUB transformUniforms;
 	transformUniforms.view = camera.getViewMatrix();
 	transformUniforms.projection =
 		glm::perspective(
@@ -180,12 +180,15 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
-	ShadingUB shadingUniforms;
+	
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);
 	registerLight(shadingUniforms, scene);
 	glNamedBufferSubData(m_shadingUB, 0, sizeof(ShadingUB), &shadingUniforms);
 	
+	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
+
 	// 渲染用的帧缓冲，接下来所有绘制的最后结果都会先保存在这个framebuffer上
 	// 然后再将framebuffer绘制到屏幕上
 	glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer.id);
@@ -193,11 +196,6 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 	// 如果不显示天空盒则为背景色
 	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	// 绑定Uniform Buffer
-	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
-	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_shadingUB);
-
 	
 	// 模型
 	m_pbrShader.use();
@@ -214,14 +212,9 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i]->visible) continue;
-		transformUniforms.model =
-			glm::translate(glm::mat4(1.0f), m_models[i]->position.toGlmVec()) *
-			// TODO: 删去这一段测试用旋转代码
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
-			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
+		transformUniforms.model = m_models[i]->getToWorldMatrix();
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+		m_models[i]->setPreModelMatrix(transformUniforms.model);
 
 		m_models[i]->draw(m_pbrShader);
 	}

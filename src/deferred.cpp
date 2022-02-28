@@ -5,7 +5,28 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	glViewport(0, 0, ScreenWidth, ScreenHeight);
 	// TODO 封装两个Pass
 	// 1. 几何计算Pass
-	TransformUB transformUniforms;
+
+	// TAA UB
+	static int haltonIdx = 0;
+	taaUniforms.offsetIdx = haltonIdx;
+	haltonIdx = (haltonIdx + 1) % 8;
+	taaUniforms.screenHeight = ScreenHeight;
+	taaUniforms.screenWidth = ScreenWidth;
+	if (taaUniforms.preProjection != preProj)
+	{
+		int x = 1;
+	}
+	taaUniforms.preProjection = preProj;
+
+	if (taaUniforms.preView != preView)
+	{
+		int x = 1;
+	}
+	taaUniforms.preView = preView;
+	glNamedBufferSubData(m_taaUB, 0, sizeof(TaaUB), &taaUniforms);
+	glBindBufferBase(GL_UNIFORM_BUFFER, 1, m_taaUB);
+
+	// Transform UB
 	transformUniforms.view = camera.getViewMatrix();
 	transformUniforms.projection =
 		glm::perspective(
@@ -15,10 +36,19 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 		);
 	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	glBindBufferBase(GL_UNIFORM_BUFFER, 0, m_transformUB);
+	preView = transformUniforms.view;
+	preProj = transformUniforms.projection;
+	
+	if (taaUniforms.preView != transformUniforms.view)
+	{
+		int x = 0;
+	}
+	if (taaUniforms.preProjection != transformUniforms.projection)
+	{
+		int x = 0;
+	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.id);
-	
-
 	// 先将颜色缓冲清空为背景色，如果没有天空盒则将显示该颜色
 	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -35,21 +65,17 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 
 	for (int i = 0; i < m_models.size(); ++i) {
 		if (!m_models[i]->visible) continue;
-		transformUniforms.model =
-			glm::translate(glm::mat4(1.0f), m_models[i]->position.toGlmVec()) *
-			// TODO: 删去这一段测试用旋转代码
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectPitch), glm::vec3(1, 0, 0)) *
-			glm::rotate(glm::mat4(1.0f), glm::radians(scene.objectYaw), glm::vec3(0, 1, 0)) *
-			glm::eulerAngleXYZ(glm::radians(m_models[i]->rotation.x()), glm::radians(m_models[i]->rotation.y()), glm::radians(m_models[i]->rotation.z())) *
-			glm::scale(glm::mat4(1.0f), glm::vec3(m_models[i]->scale));
+		transformUniforms.model = m_models[i]->getToWorldMatrix();
 		glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+		taaUniforms.preModel = m_models[i]->getPreModelMatrix();
+		glNamedBufferSubData(m_taaUB, 0, sizeof(TaaUB), &taaUniforms);
+
+		m_models[i]->setPreModelMatrix(transformUniforms.model);
 
 		m_models[i]->draw(m_geometryPassShader);
 	}
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT);
+	
 
 	// 2. 计算光照Pass
 

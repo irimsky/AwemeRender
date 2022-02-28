@@ -68,9 +68,20 @@ void Model::loadTexture(std::string filePath, TextureType type)
 
 glm::mat4 Model::getToWorldMatrix()
 {
-	return glm::translate(glm::mat4(1.0f), position.toGlmVec()) *
+	return
+	glm::translate(glm::mat4(1.0f), position.toGlmVec()) *
 	glm::eulerAngleXYZ(glm::radians(rotation.x()), glm::radians(rotation.y()), glm::radians(rotation.z()))*
 	glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+}
+
+void Model::setPreModelMatrix(const glm::mat4& mat)
+{
+	preModelMat = mat;
+}
+
+glm::mat4 Model::getPreModelMatrix()
+{
+	return preModelMat;
 }
 
 void Model::draw()

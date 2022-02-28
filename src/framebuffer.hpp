@@ -29,6 +29,7 @@ public:
 	GLuint positionTarget, normalTarget, 
 		   rmoTarget,	// rough,metal,occlusion 三合一
 		   emissionTarget;
+	GLuint velocityTarget;	// 屏幕速度
 };
 
 GBuffer createGBuffer(int width, int height);

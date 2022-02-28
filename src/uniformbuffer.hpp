@@ -31,3 +31,15 @@ struct ShadingUB
 };
 
 void registerLight(ShadingUB& shadingUB, const SceneSettings& scene);
+
+struct TaaUB
+{
+	// 一定要把矩阵类型放在最前面，否则会导致bug（原因不明
+	glm::mat4 preProjection;
+	glm::mat4 preView;
+	glm::mat4 preModel;	
+
+	int offsetIdx;
+	float screenWidth;
+	float screenHeight;
+};
