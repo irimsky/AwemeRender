@@ -34,6 +34,9 @@
     <Filter Include="头文件\component">
       <UniqueIdentifier>{b60f9df5-7a04-4234-a4b7-b524eccff753}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders\taa">
+      <UniqueIdentifier>{749b146c-a5a5-42c7-a2cf-7d479cd38bb2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\application.cpp">
@@ -249,6 +252,12 @@
     </None>
     <None Include="data\shaders\deferred\deferred_light_vs.glsl">
       <Filter>shaders\deferred</Filter>
+    </None>
+    <None Include="data\shaders\taa\taa_fs.glsl">
+      <Filter>shaders\taa</Filter>
+    </None>
+    <None Include="data\shaders\taa\taa_vs.glsl">
+      <Filter>shaders\taa</Filter>
     </None>
   </ItemGroup>
 </Project>

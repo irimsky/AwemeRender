@@ -64,8 +64,9 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	}
 
 	m_shadowFrameBuffer = createShadowFrameBuffer(ShadowMapSize, ShadowMapSize);
-	m_gbuffer = createGBuffer(ScreenWidth, ScreenHeight);
-	
+	m_gbuffer = createGBuffer(width, height);
+	m_taaFrameBuffers[0] = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
+	m_taaFrameBuffers[1] = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
 
 	std::printf("OpenGL 4.5 Renderer [%s]\n", glGetString(GL_RENDERER));
 

@@ -58,8 +58,8 @@ void main()
 	vout.jitter = jitter;
 	
 	mat4 jitterMat = mat4( 1.0 );
-	jitterMat[3][0] += jitter.x * deltaWidth;
-	jitterMat[3][1] += jitter.y * deltaHeight;
+	jitterMat[3][0] += jitter.x;
+	jitterMat[3][1] += jitter.y;
 	
 	vec3 nowPositon;
 	if(haveHeight)

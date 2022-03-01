@@ -197,9 +197,9 @@ void Renderer::renderImgui(SceneSettings& scene)
 			{
 				ImGui::PushID(j);
 				if (ImGui::ImageButton(
-					/*m_models[i]->haveTexture((TextureType)j)
-					? (GLuint*)m_models[i]->textures[j].id : 0,*/
-					(GLuint*)m_gbuffer.velocityTarget,
+					m_models[i]->haveTexture((TextureType)j)
+					? (GLuint*)m_models[i]->textures[j].id : 0,
+					//(GLuint*)m_taaFrameBuffers[m_taaCurrentFrame].colorTarget,
 					size
 				))
 				{

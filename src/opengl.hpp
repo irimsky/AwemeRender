@@ -64,7 +64,9 @@ private:
 	FrameBuffer m_framebuffer;
 	FrameBuffer m_interFramebuffer;
 	FrameBuffer m_shadowFrameBuffer;
-	// position, normal, albedo, (roughness, metalness, occlusion), emmision
+	FrameBuffer m_taaFrameBuffers[2];
+	int m_taaCurrentFrame = 0;
+	// position, normal, albedo, (roughness, metalness, occlusion), emmision, [velocity]
 	GBuffer m_gbuffer;
 	
 
@@ -89,6 +91,8 @@ private:
 
 	Shader m_geometryPassShader;
 	Shader m_lightPassShader;
+
+	Shader m_taaShader;
 
 	Texture m_envTexture;
 	Texture m_irmapTexture;

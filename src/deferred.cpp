@@ -50,7 +50,8 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_gbuffer.id);
 	// 先将颜色缓冲清空为背景色，如果没有天空盒则将显示该颜色
-	glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
+	//glClearColor(scene.backgroundColor.x(), scene.backgroundColor.y(), scene.backgroundColor.z(), 1.0f);
+	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	if (!m_geometryPassShader.ID)
@@ -121,14 +122,13 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	for (int j = 0; j < scene.NumLights; ++j)
 		glBindTextureUnit(bindIdx++, scene.dirLights[j].shadowMap.id);
 
-	glBindTextureUnit(bindIdx++, m_gbuffer.depthStencilTarget);
 
 	glBindVertexArray(m_quadVAO);	// 屏幕VAO
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
-
+	
 	// 转移深度信息到中介frambuffer
 	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
@@ -137,10 +137,55 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	if (scene.skybox)
 		drawSkybox();
 
+	// TAA
+	glBindFramebuffer(GL_FRAMEBUFFER, m_taaFrameBuffers[m_taaCurrentFrame].id);
+	if (!m_taaShader.ID)
+	{
+		m_taaShader = Shader(
+			PROJECT_PATH + "/data/shaders/taa/taa_vs.glsl",
+			PROJECT_PATH + "/data/shaders/taa/taa_fs.glsl"
+		);
+	}
+	m_taaShader.use();
+	glBindTextureUnit(0, m_interFramebuffer.colorTarget);
+	glBindTextureUnit(1, m_taaFrameBuffers[!m_taaCurrentFrame].colorTarget);
+	glBindTextureUnit(2, m_gbuffer.velocityTarget);
+	glBindVertexArray(m_quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	/*glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);*/
+
+	////// 转移深度信息到中介frambuffer
+	//m_taaFrameBuffers[m_taaCurrentFrame].depthStencilTarget = m_gbuffer.depthStencilTarget;
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+	//	m_taaFrameBuffers[m_taaCurrentFrame].depthStencilTarget, 0);
+
+	////// 天空盒
+	//if (scene.skybox)
+	//	drawSkybox();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	m_tonemapShader.use();
-	glBindTextureUnit(0, m_interFramebuffer.colorTarget);
+	glBindTextureUnit(0, m_taaFrameBuffers[m_taaCurrentFrame].colorTarget);
 	glBindVertexArray(m_quadVAO);	// 屏幕VAO
 	glDrawArrays(GL_TRIANGLES, 0, 6);
+	m_taaCurrentFrame ^= 1;
+
+	
+
+	//// 转移深度信息到中介frambuffer
+	//m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
+
+	//// 天空盒
+	//if (scene.skybox)
+	//	drawSkybox();
+
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//m_tonemapShader.use();
+	//glBindTextureUnit(0, m_interFramebuffer.colorTarget);
+	//glBindVertexArray(m_quadVAO);	// 屏幕VAO
+	//glDrawArrays(GL_TRIANGLES, 0, 6);
 }

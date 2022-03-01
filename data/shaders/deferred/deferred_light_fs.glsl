@@ -43,7 +43,7 @@ layout(binding=8) uniform sampler2D dirLightShadowMap0;
 layout(binding=9) uniform sampler2D dirLightShadowMap1;
 layout(binding=10) uniform sampler2D dirLightShadowMap2;
 
-layout(binding=11) uniform sampler2D depthMap;
+
 
 uniform bool haveSkybox;
 uniform vec3 backgroundColor;
