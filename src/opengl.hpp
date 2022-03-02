@@ -63,6 +63,7 @@ private:
 
 	FrameBuffer m_framebuffer;
 	FrameBuffer m_interFramebuffer;
+	FrameBuffer m_finalFramebuffer;
 	FrameBuffer m_shadowFrameBuffer;
 	FrameBuffer m_taaFrameBuffers[2];
 	int m_taaCurrentFrame = 0;

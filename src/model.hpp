@@ -90,11 +90,15 @@ public:
 			}
 
 		}
+		preModelMat = getToWorldMatrix();
 	}
 	Model() 
 		: scale(1.0f), position(vec3(0.0f)), color(vec3(0.8f)), rotation(vec3(0.0f)),
 		isSelected(false), visible(true) 
-	{};
+	{
+		preModelMat = getToWorldMatrix();
+	};
+
 	static Model* createSphere();
 	static Model* createCube();
 	static Model* createPlane();

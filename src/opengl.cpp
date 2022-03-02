@@ -62,7 +62,7 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	else {
 		m_interFramebuffer = m_framebuffer;
 	}
-
+	m_finalFramebuffer = createFrameBufferWithRBO(width, height, 0, GL_NONE, GL_NONE);
 	m_shadowFrameBuffer = createShadowFrameBuffer(ShadowMapSize, ShadowMapSize);
 	m_gbuffer = createGBuffer(width, height);
 	m_taaFrameBuffers[0] = createFrameBufferWithRBO(width, height, 0, GL_RGBA16F, GL_NONE);
@@ -179,8 +179,10 @@ void Renderer::render(GLFWwindow* window, const Camera& camera, const SceneSetti
 			float(m_framebuffer.width)/float(m_framebuffer.height),
 			Near, Far
 		);
-	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
 	
+	glNamedBufferSubData(m_transformUB, 0, sizeof(TransformUB), &transformUniforms);
+	preProj = transformUniforms.projection;
+	preView = transformUniforms.view;
 	
 	const glm::vec3 eyePosition = camera.Position;
 	shadingUniforms.eyePosition = glm::vec4(eyePosition, 0.0f);

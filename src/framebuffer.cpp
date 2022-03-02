@@ -48,9 +48,11 @@ FrameBuffer createFrameBufferWithRBO(
 	}
 
 	// 检查Framebuffer完成状态
-	GLenum status = glCheckNamedFramebufferStatus(fb.id, GL_DRAW_FRAMEBUFFER);
-	if (status != GL_FRAMEBUFFER_COMPLETE) {
-		throw std::runtime_error("Framebuffer创建失败: " + std::to_string(status));
+	if (colorFormat != GL_NONE) {
+		GLenum status = glCheckNamedFramebufferStatus(fb.id, GL_DRAW_FRAMEBUFFER);
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			throw std::runtime_error("Framebuffer创建失败: " + std::to_string(status));
+		}
 	}
 	return fb;
 }
