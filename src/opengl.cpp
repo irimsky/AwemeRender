@@ -31,10 +31,10 @@ GLFWwindow* Renderer::initialize(int width, int height, int maxSamples)
 	glfwWindowHint(GLFW_STENCIL_BITS, 0);
 	glfwWindowHint(GLFW_SAMPLES, 0);
 
-	std::string tit = "PBR";
-	GLFWwindow* window = glfwCreateWindow(width, height, tit.c_str(), nullptr, nullptr);
+	std::string title = "AwemeRender";
+	GLFWwindow* window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
 	if (!window) {
-		throw std::runtime_error("GLFW窗口创建失败");
+		throw std::runtime_error("Create GLFW Window Failed");
 	}
 
 	glfwMakeContextCurrent(window);

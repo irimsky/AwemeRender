@@ -127,7 +127,7 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	m_interFramebuffer.depthStencilTarget = m_gbuffer.depthStencilTarget;
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_interFramebuffer.depthStencilTarget, 0);
 
-	// 天空盒
+	// 天空盒，画完天空盒再进行TAA，不然最终结果会因为ghosting掺杂背景色（黑
 	if (scene.skybox)
 		drawSkybox();
 
@@ -154,12 +154,12 @@ void Renderer::deferredRender(GLFWwindow* window, const Camera& camera, const Sc
 	m_taaCurrentFrame ^= 1;
 
 
-	glBindFramebuffer(GL_FRAMEBUFFER, m_finalFramebuffer.id);
-	m_finalFramebuffer.colorTarget = m_taaFrameBuffers[m_taaCurrentFrame].colorTarget;
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_finalFramebuffer.id);
+	//m_finalFramebuffer.colorTarget = m_taaFrameBuffers[m_taaCurrentFrame].colorTarget;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	m_tonemapShader.use();
-	glBindTextureUnit(0, m_finalFramebuffer.colorTarget);
+	glBindTextureUnit(0, m_taaFrameBuffers[!m_taaCurrentFrame].colorTarget);
 	glBindVertexArray(m_quadVAO);	// 屏幕VAO
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 }

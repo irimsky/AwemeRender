@@ -8,7 +8,7 @@
 class SceneSettings
 {
 public:
-	static const int NumLights = 3;
+	static const int NumLights = 8;
 	DirectionalLight dirLights[NumLights];
 	PointLight ptLights[NumLights];
 

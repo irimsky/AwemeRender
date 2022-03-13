@@ -54,12 +54,18 @@ void main()
 	vout.normal = mat3(model) *  normal;
 	
 	float deltaWidth = 1.0/screenWidth, deltaHeight = 1.0/screenHeight;
-	vec2 jitter = vec2(Halton_2_3[offsetIdx].x * deltaWidth, Halton_2_3[offsetIdx].y * deltaHeight);
+	vec2 jitter = vec2(
+		Halton_2_3[offsetIdx].x * deltaWidth,
+		Halton_2_3[offsetIdx].y * deltaHeight
+	);
 	vout.jitter = jitter;
 	
-	mat4 jitterMat = mat4( 1.0 );
-	jitterMat[3][0] += jitter.x;
-	jitterMat[3][1] += jitter.y;
+//	mat4 jitterMat = mat4( 1.0 );
+//	jitterMat[3][0] += jitter.x;
+//	jitterMat[3][1] += jitter.y;
+	mat4 jitterMat = projection;
+	jitterMat[2][0] += jitter.x;
+	jitterMat[2][1] += jitter.y;
 	
 	vec3 nowPositon;
 	if(haveHeight)
@@ -72,7 +78,7 @@ void main()
 		nowPositon = position;
 	}
 
-	gl_Position = jitterMat * projection * view * model * vec4(nowPositon, 1.0);
+	gl_Position = jitterMat * view * model * vec4(nowPositon, 1.0);
 	vout.position = vec3(model * vec4(nowPositon, 1.0));
 	vout.preScreenPosition = preProjection * preView * preModel * vec4(nowPositon, 1.0);
 	vout.nowScreenPosition = projection * view * model * vec4(nowPositon, 1.0);

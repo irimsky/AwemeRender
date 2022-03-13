@@ -2,7 +2,7 @@
 
 const float PI = 3.141592;
 const float Epsilon = 0.00001;
-const int NumLights = 3;
+const int NumLights = 8;
 
 // 非金属的F0近似为0.4
 const vec3 NonMetalF0 = vec3(0.04);
@@ -258,4 +258,6 @@ float dirLightVisibility(vec4 fragPosLightSpace, float cosTheta, int idx)
 		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap1);
 	else if(idx == 2)
 		return dirLightShadow(fragPosLightSpace, cosTheta, dirLightShadowMap2);
+	else
+		return 1.0f;
 }

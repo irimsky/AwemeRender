@@ -60,7 +60,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 		for (int i = 0; i < scene.NumLights; ++i)
 		{
 			std::string lightNum = "Light";
-			lightNum += '0' + char(i + 1);
+			lightNum += std::to_string(i + 1);
 			ImGui::Checkbox(lightNum.c_str(), &scene.dirLights[i].enabled);
 			if (scene.dirLights[i].enabled) {
 				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.dirLights[i].radiance.toPtr());
@@ -71,7 +71,7 @@ void Renderer::renderImgui(SceneSettings& scene)
 		for (int i = 0; i < scene.NumLights; ++i)
 		{
 			std::string lightNum = "PointLight";
-			lightNum += '0' + char(i + 1);
+			lightNum += std::to_string(i + 1);
 			ImGui::Checkbox(lightNum.c_str(), &scene.ptLights[i].enabled);
 			if (scene.ptLights[i].enabled) {
 				ImGui::ColorEdit3((lightNum + " Color").c_str(), scene.ptLights[i].radiance.toPtr());

@@ -1,6 +1,8 @@
 #include <cstdio>
 #include <string>
 #include <memory>
+#include <cstdlib>
+#include <ctime>
 
 #include "application.hpp"
 #include "math.hpp"
@@ -61,6 +63,14 @@ void init()
 	Application::sceneSetting.dirLights[2] = DirectionalLight(
 		Math::vec3(1.0f), Math::vec3(0.0f, -1.0f, 0.0f)
 	);
+
+	for (int i = 3; i < Application::sceneSetting.NumLights; ++i)
+	{
+		Application::sceneSetting.dirLights[i] = DirectionalLight(
+			Math::vec3(0.1f * i),
+			Math::vec3(-1.0f, -1.0f, -1.0f)
+		);
+	}
 
 	Application::sceneSetting.ptLights[0] = PointLight(
 		Math::vec3(1.0f), Math::vec3(-15.0f, 0.0f, 0.0f)
